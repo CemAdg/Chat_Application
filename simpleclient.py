@@ -10,22 +10,22 @@ server_port = 10001
 # Buffer size
 buffer_size = 1024
 
-# Message sent to server
-message = 'Hi server!'
+# Message sent to tmp_server
+message = 'Hi tmp_server!'
 value = input("Please enter a string:\n")
 message = f'{message}\n{value}'
 #print(f'You entered {message}')  format alternative
 
 while True:
 
-    # Send data to server
+    # Send data to tmp_server
     client_socket.sendto(message.encode(), (server_address, server_port))
-    print('Sent to server: ', message)
+    print('Sent to tmp_server: ', message)
 
-    # Receive response from server
+    # Receive response from tmp_server
     print('Waiting for response...')
     data, server = client_socket.recvfrom(buffer_size)
-    print('Received message from server: ', data.decode())
+    print('Received message from tmp_server: ', data.decode())
 
     if data.decode() == 'Geh raus':
         break
