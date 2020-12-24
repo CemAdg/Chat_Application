@@ -3,8 +3,8 @@ import socket
 # Create a UDP socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# Server application IP address and port
-server_address = 'hasanoglu.ddnss.de'
+# Server TWT application IP address and port
+server_address = '127.0.0.1'
 server_port = 10001
 
 # Buffer size
