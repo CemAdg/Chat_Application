@@ -3,7 +3,7 @@ import socket
 # Create a UDP socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# Server TWT application IP address and port
+# server application IP address and port
 server_address = '127.0.0.1'
 server_port = 10001
 
