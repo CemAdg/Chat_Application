@@ -1,59 +1,52 @@
-from socket import socket, AF_INET, SOCK_DGRAM, SOCK_STREAM
-from threading import Thread
+import socket
+import threading
+import sys
+import time
 
-SERVER = socket(AF_INET, SOCK_DGRAM)  # create a socket to get machine address
-SERVER.connect(("8.8.8.8", 80))
-HOST = SERVER.getsockname()[0]  # gets the ipv4 address from the machine
-PORT = 10000
-BUFFER_SIZE = 1024
-HOST_ADDRESS = ('19.10.19.20', PORT)
-FORMAT = "utf-8"
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+host = '0.0.0.0'
+port = 10000
+hAddress = (host, port)
+bSize = 1024
+unicode = 'utf-8'
 
-SERVER = socket(AF_INET, SOCK_STREAM)
-SERVER.bind(HOST_ADDRESS)
+sock.bind(hAddress)
+print(f'Server is running and listening on IP {host} with PORT {port}', file=sys.stderr)
 
-SERVER.listen()
+sock.listen(1)
 
-clients = []
-aliases = []
-
-
-def broadcast(message, sender):
-    for client in clients:
-        if sender != client:
-            client.send(message)
+connections = []
 
 
-def handle_client(client):
+def handler(c, a):
     while True:
-        message = (f'{aliases[clients.index(client)]}: ').encode(FORMAT) + client.recv(BUFFER_SIZE)
-        broadcast(message, client)
-
-    else:
-        index = clients.index(client)
-        clients.remove(client)
-        client.close()
-        alias = aliases[index]
-        print(f'Connection lost with {alias}')
-        broadcast(f'{alias} has left the chat room'.encode(FORMAT), client)
-        aliases.remove(alias)
+        data = c.recv(bSize)
+        if not data:
+            print(f'{a[0]}:{a[1]} disconnected')
+            connections.remove(c)
+            c.close()
+            break
+        for connection in connections:
+            connection.send(f'{a} said: {data.decode(unicode)}'.encode(unicode))
+        print(f'Messsage from {threading.currentThread().name} {a} ==> {data.decode(unicode)}')
 
 
-def receive():
-    while True:
-        print(f'Server is running and listening @ {HOST_ADDRESS}')
-        client, address = SERVER.accept()
-        client.send('alias?'.encode(FORMAT))
-        alias = client.recv(BUFFER_SIZE).decode(FORMAT)
-        aliases.append(alias)
-        clients.append(client)
-        print(f'Connection is established with {str(address)}')
-        print(f'The Alias of this Client is {alias}')
-        broadcast(f'{alias} has connected to the chat room'.encode(FORMAT), client)
-        client.send('You are now connected'.encode(FORMAT))
-        thread = Thread(target=handle_client, args=(client,))
-        thread.start()
-
-
-if __name__ == "__main__":
-    receive()
+while True:
+    try:
+        c, a = sock.accept()
+        cThread = threading.Thread(target=handler, args=(c, a))
+        cThread.daemon = True
+        cThread.start()
+        connections.append(c)
+        print(f'{a[0]}:{a[1]} connected')
+        time.sleep(0.05)
+        print('RUNNING THREADS', file=sys.stderr)
+        time.sleep(0.05)
+        for thread in threading.enumerate():
+            print(thread.name)
+        time.sleep(0.05)
+        print('---------------', file=sys.stderr)
+    except KeyboardInterrupt:
+        sock.close()
+        print("\nConnection closed")
+        break
