@@ -4,7 +4,7 @@ import sys
 import time
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = '0.0.0.0'
+host = ''
 port = 10000
 hAddress = (host, port)
 bSize = 1024
