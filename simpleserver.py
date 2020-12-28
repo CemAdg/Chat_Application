@@ -4,7 +4,7 @@ import socket
 # Create a UDP socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# Server application IP address and port
+# Server TWT application IP address and port
 server_address = socket.gethostname()
 server_port = 10001
 
@@ -16,7 +16,7 @@ message = 'Hi tmp_client! Nice to connect with you!'
 
 # Bind socket to port
 server_socket.bind((server_address, server_port))
-print('Server up and running at {}:{}'.format(server_address, server_port))
+print('Server TWT up and running at {}:{}'.format(server_address, server_port))
 
 while True:
     print('\nWaiting to receive message...\n')
