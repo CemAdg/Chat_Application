@@ -5,11 +5,11 @@ import time
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = 'localhost'
-port = 10000
+port = 10003
 hAddress = (host, port)
 bSize = 1024
 unicode = 'utf-8'
-leader = True
+leader = False
 
 if __name__ == '__main__':
     sock.bind(hAddress)
