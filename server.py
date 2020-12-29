@@ -4,7 +4,7 @@ import socket
 import threading
 import sys
 import time
-from cluster import ports, receive_multicast, send_multicast
+from cluster import hosts, ports, receive_multicast, send_multicast
 
 
 # sys.path.append(os.path.dirname(os.path.abspath("")))
@@ -13,19 +13,35 @@ from cluster import ports, receive_multicast, send_multicast
 # from cluster import leader_election
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = ''
+host = hosts.myIP
 port = ports.server
 host_address = (host, port)
 buffer_size = 1024
 unicode = 'utf-8'
 
-connections = []
-server_list = []
-leader_server = ''
-for thread in threading.enumerate():
-    print(thread.name)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    try:
+        sock.bind(host_address)
+        sock.listen()
+        print(f'Server is running and listening on IP {host} with PORT {port}', file=sys.stderr)
+        sock.accept()
+    except KeyboardInterrupt:
+        print(f'Closing Server on IP {host} with PORT {port}', file=sys.stderr)
+        sock.close()
+
+
+
+
+
+
+
+
+
+
+
+
+"""if __name__ == "__main__":
     t1 = threading.Thread(target=receive_multicast.starting_multicast, args=())
     t1.start()
     time.sleep(1)
@@ -45,7 +61,10 @@ if __name__ == "__main__":
     sock.bind(host_address)
     sock.listen(1)
     print(f'Server is running and listening on IP {host} with PORT {port}', file=sys.stderr)
-
+    
+    for thread in threading.enumerate():
+    print(thread.name)
+    
     # leader_election.start_leader_election(server_list, leader)
 
     while True:
@@ -67,3 +86,4 @@ if __name__ == "__main__":
             sock.close()
             print("\nConnection closed")
             break
+"""
