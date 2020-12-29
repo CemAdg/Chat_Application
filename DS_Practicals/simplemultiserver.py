@@ -12,11 +12,11 @@ class Server(multiprocessing.Process):
 
     # Override run method
     def run(self):
-        # Message to be sent to client
-        message = 'Hi ' + self.client_address[0] + ':' + str(self.client_address[1]) + '. This is server ' + str(os.getpid())
-        # Send message to client
+        # Message to be sent to testclient
+        message = 'Hi ' + self.client_address[0] + ':' + str(self.client_address[1]) + '. This is testserver ' + str(os.getpid())
+        # Send message to testclient
         self.server_socket.sendto(str.encode(message), self.client_address)
-        print('Sent to client: ', message)
+        print('Sent to testclient: ', message)
 
 
 if __name__ == "__main__":
@@ -35,10 +35,10 @@ if __name__ == "__main__":
     print('Server up and running at {}:{}'.format(server_address, server_port))
 
     while True:
-        # Receive message from client
+        # Receive message from testclient
         data, address = server_socket.recvfrom(buffer_size)
         print('Received message \'{}\' at {}:{}'.format(data.decode(), address[0], address[1]))
-        # Create a server process
+        # Create a testserver process
         p = Server(server_socket, data, address)
         p.start()
         p.join()

@@ -10,18 +10,18 @@ server_port = 10001
 # Buffer size
 buffer_size = 1024
 
-# Message sent to server
-message = 'Hi server!'
+# Message sent to testserver
+message = 'Hi testserver!'
 
 try:
-    # Send data to server
+    # Send data to testserver
     client_socket.sendto(message.encode(), (server_address, server_port))
-    print('Sent to server: ', message)
+    print('Sent to testserver: ', message)
 
-    # Receive response from server
+    # Receive response from testserver
     print('Waiting for response...')
     data, server = client_socket.recvfrom(buffer_size)
-    print('Received message from server: ', data.decode())
+    print('Received message from testserver: ', data.decode())
 
 finally:
     client_socket.close()

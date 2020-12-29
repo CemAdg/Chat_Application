@@ -1,16 +1,12 @@
-# this is main server
+# this is a server
 
 import socket
-import threading
 import sys
+import threading
 import time
+
 from cluster import hosts, ports, receive_multicast, send_multicast
 
-
-# sys.path.append(os.path.dirname(os.path.abspath("")))
-
-# import cluster.receive_multicast
-# from cluster import leader_election
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = hosts.myIP
@@ -19,16 +15,65 @@ host_address = (host, port)
 buffer_size = 1024
 unicode = 'utf-8'
 
+isLeader = bool(input())
+server_exist = False
 
 if __name__ == '__main__':
-    try:
-        sock.bind(host_address)
-        sock.listen()
-        print(f'Server is running and listening on IP {host} with PORT {port}', file=sys.stderr)
-        sock.accept()
-    except KeyboardInterrupt:
-        print(f'Closing Server on IP {host} with PORT {port}', file=sys.stderr)
-        sock.close()
+    while True:
+        try:
+            for server in hosts.server_list:
+                server_exist = True if server[0] == host_address[0] else server_exist
+
+            if not server_exist:
+                multicast_sender = send_multicast.sending_request_to_multicast()
+                if isLeader and not multicast_sender:
+                    t1 = threading.Thread(target=receive_multicast.starting_multicast, args=())
+                    t1.daemon = True
+                    t1.start()
+            time.sleep(1)
+            print('loop done')
+            time.sleep(3)
+
+
+
+
+            """for server in hosts.server_list:
+                server_exist = True if server[0] == host_address[0] else server_exist
+
+            if server_exist:
+                send_multicast.update_server_list()
+            else:
+                time.sleep(1)
+                multicast_sender = send_multicast.sending_request_to_multicast()
+                if not multicast_sender:
+                    t1 = threading.Thread(target=receive_multicast.starting_multicast, args=())
+                    t1.daemon = True
+                    t1.start()
+            time.sleep(1)
+            print(hosts.server_list)
+            time.sleep(5)"""
+
+
+            """t2 = threading.Thread(target=send_multicast.update_server_list(), args=())
+            t2.daemon = True
+            t2.start()
+            time.sleep(1)
+            receive_multicast.send_server_list()
+            time.sleep(2)
+            #print(send_multicast.update_server_list())
+            #print(hosts.server_list)
+            time.sleep(10)"""
+
+
+
+            """sock.bind(host_address)
+            sock.listen()
+            print(f'Starting Server and listening on IP {host} with PORT {port}', file=sys.stderr)
+            sock.accept()"""
+        except KeyboardInterrupt:
+            print(f'\nClosing Server on IP {host} with PORT {port}', file=sys.stderr)
+            sock.close()
+            break
 
 
 
