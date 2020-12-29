@@ -8,7 +8,8 @@ from cluster.ports import MULTICAST_PORT_SERVER
 def sendMulticastMessage():
     leader_server_found = False
     message = ('This is a multicast msg')
-    multicast_group = ('224.3.29.71', MULTICAST_PORT_SERVER)
+    #multicast_group = ('224.3.29.71', MULTICAST_PORT_SERVER)
+    multicast_group = ('224.0.0.1', MULTICAST_PORT_SERVER)
 
     # Create the datagram socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -30,7 +31,7 @@ def sendMulticastMessage():
             while True:
                 print('Server multicast: Waiting to receive respond to sent multicast message from the leader')
                 try:
-                    data, server_addr = sock.recvfrom(128)  # receive 128 bytes at once
+                    data, server_addr = sock.recvfrom(1024)  # receive 128 bytes at once
                     if data.decode() == "True":
                         print('received "%s" from %s' % (data.decode(), server_addr))
                         leader_server_found = True  # Leader Server discovered stop multicasting

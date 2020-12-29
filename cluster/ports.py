@@ -8,7 +8,7 @@ CLIENT_CONNECT_PORT_LEADERSERVER = 8080    #Port used for clients to connect to 
 
 SERVER_CLIENTLIST_UPDATE_PORT = 8090       #Port used for replica servers to get updated client list from leader
 SERVER_SERVERLIST_UPDATE_PORT = 8060       ##Port used for replica servers to get updated server list from leader
-SERVER_CHATMEMBERS_UPDATE_PORT = 8070       #Port used for replicating chat member list from leader server to member servers
+SERVER_ORDERLIST_UPDATE_PORT = 8070        #Port used for replicating orderlist from leader server to member servers
 SERVER_LEADER_ELECTION_PORT = 8100         #Port used for new leader election when leader crashes
 SERVER_NEW_LEADER_MESSAGE_PORT = 8110      #Port used to inform all server about new leader after the election
-SERVER_SEND_CHATMEMBERS_TO_NEW_LEADER_PORT= 8105  #Port used when new leader is selected after LCR it compares chat member lit with other leaders and asks for the latest one
+SERVER_SEND_ORDERLIST_TO_NEW_LEADER_PORT = 8105  #Port used when new leader is selected after LCR it compares orderlist with other leaders and asks for the latest one

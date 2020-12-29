@@ -46,7 +46,7 @@ FORMAT = 'utf-8'    #Format of msg
 #host = host_ip_address
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))              #connect to itself to get IP of machine. This is Necessary since sometimes server is running on 127.0.0.1 localhost
-host_ip_address= s.getsockname()[0]
+host_ip_address = s.getsockname()[0]
 #port = int(sys.argv[1])  # Input port number as first argument from command line when running script
 
 
@@ -235,7 +235,7 @@ class server():
                 newserverlist = self.serverlist
                 del newserverlist[failed_server]
                 if self.leaderCrashed==True:
-                    print('Removed crashed leader server',ip,'from serverlist')
+                    print('Removed crashed leader ', ip, ' from serverlist')
                 else:
                     print('Removed crashed server', ip, 'from serverlist')
 
@@ -615,7 +615,8 @@ class server():
 
     def listenClientMulticast(self):        #Listen for Client multicast messages and response with isLeaderValue
         #this function is for clients to discover the leader server and connect to leader server
-        multicast_group = '224.3.29.71'
+        #multicast_group = '224.3.29.71'
+        multicast_group = '224.0.0.1'
         server_address = ('', MULTICAST_PORT_CLIENT)
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create the socket
@@ -629,7 +630,7 @@ class server():
         # Receive/respond loop
         logging.info('Listen to Client Multicast Address: {} {}'.format(multicast_group,MULTICAST_PORT_CLIENT))
         while True:
-            data, address = sock.recvfrom(128)
+            data, address = sock.recvfrom(1024)
             logging.info('Listen Client multicast: received {} bytes from {}'.format (len(data), address))
             logging.info('Listen Client multicast: sending isLeader Value: {} to {}'.format(self.isLeader,address))
 
@@ -703,7 +704,8 @@ class server():
 #************************************************** MULTICAST ********************************************************
 
     def listenMulticast(self):
-        multicast_group = '224.3.29.71'
+        #multicast_group = '224.3.29.71'
+        multicast_group = '224.0.0.1'
         server_address = ('', MULTICAST_PORT_SERVER)
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)   # Create the socket
@@ -715,9 +717,9 @@ class server():
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         # Receive/respond loop
-        logging.info('Listen to Multicast Address {} {}:'.format(multicast_group,MULTICAST_PORT_SERVER))
+        logging.info('Listen to Multicast Address: {} {}'.format(multicast_group,MULTICAST_PORT_SERVER))
         while True:
-            data, address = sock.recvfrom(128)
+            data, address = sock.recvfrom(1024)
             logging.info('Listen multicast: received {} bytes from {}'.format(len(data), address))
             logging.info('Listen multicast: sending acknowledgement to {}'.format(address))
 
@@ -764,7 +766,7 @@ class server():
             #host = socket.gethostbyname(socket.gethostname())      #get IP from running machine , Gibt manchmal 127.0.0.1 aus statt 192. ...
             logging.info("Server started on host and port {}, {} : ".format(host_ip_address,CLIENT_CONNECT_PORT_LEADERSERVER))
             print("Server started on host : ", host_ip_address)
-            s.bind((host_ip_address,CLIENT_CONNECT_PORT_LEADERSERVER))                                     #Bind to the port
+            s.bind((host_ip_address, CLIENT_CONNECT_PORT_LEADERSERVER))                                     #Bind to the port
 
             #Calling listen() puts the socket into server mode
             s.listen()                                              #Listen/wait for new connections
@@ -790,7 +792,6 @@ if __name__ == '__main__':
     except:
         pass
 
-
     s.startServer()
 
     if s.isLeader == False:
@@ -800,7 +801,6 @@ if __name__ == '__main__':
 
         thread2 = threading.Thread(target=s.listenforNewLeaderOrderlistRequest)
         thread2.start()
-
 
     thread3 = threading.Thread(target=s.listenClientListUpdate)
     thread3.start()
