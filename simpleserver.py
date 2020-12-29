@@ -5,7 +5,7 @@ import socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # Server application IP address and port
-server_address = socket.gethostname()
+server_address = 'localhost'
 server_port = 10001
 
 # Buffer size
@@ -31,3 +31,6 @@ while True:
         message = input("Please enter a string:\n")
         server_socket.sendto(str.encode(message), address)
         print('Replied to client: ', message)
+
+        if data.decode() == 'Geh raus':
+            break
