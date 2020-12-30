@@ -21,6 +21,10 @@ def send_data_to_server(address):
     server_exist = True if address[0] in hosts.server_list else server_exist
 
     if server_exist:
+        if hosts.leader_crashed:
+            hosts.leader = address[0]
+            hosts.leader_crashed = False
+
         print(f'[MULTICAST RECEIVER {hosts.myIP}] Sending Server List to {address[0]}',
               file=sys.stderr)
         sock.sendto(pickle.dumps([hosts.server_list, hosts.leader]), address)
@@ -50,7 +54,9 @@ def starting_multicast():
         # Receive/respond loop
         while True:
             try:
-                address = sock.recvfrom(buffer_size)[1]
+                data, address = sock.recvfrom(buffer_size)
+                if pickle.loads(data)[1] == 'True':
+                    hosts.server_list = pickle.loads(data)[0]
                 print(f'[MULTICAST RECEIVER {hosts.myIP}] Request detected from {address[0]}',
                       file=sys.stderr)
                 send_data_to_server(address)

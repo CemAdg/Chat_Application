@@ -14,5 +14,11 @@ def start_heartbeat():
         sock.connect(host_address)
         return True
     except Exception as e:
+        hosts.server_list.remove(neighbour)
+        if hosts.leader == neighbour:
+            hosts.leader_crashed = True
+        else:
+            hosts.non_leader_crashed = True
+        print(f'[FAILED SERVER] {neighbour} crashed')
         print(e)
         return False

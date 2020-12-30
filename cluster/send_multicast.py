@@ -5,7 +5,7 @@ import pickle
 
 from cluster import hosts, ports
 
-message = 'I am a new Server'
+#message = 'I am a new Server'
 mutlicast_address = ('224.3.29.71', ports.multicast)
 buffer_size = 1024
 unicode = 'utf-8'
@@ -21,12 +21,13 @@ ttl = struct.pack('b', 1)
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
 
-def sending_request_to_multicast():
+def sending_request_to_multicast(non_leader_crashed):
     try:
         # Send data to the Multicast address
         print(f'\n[MULTICAST SENDER {hosts.myIP}] Starting UDP Socket and sending data to Multicast Receiver {mutlicast_address}',
               file=sys.stderr)
-        sock.sendto(message.encode('utf-8'), mutlicast_address)
+        message = pickle.dumps([hosts.server_list, str(non_leader_crashed)])
+        sock.sendto(message, mutlicast_address)
         try:
             data, server = sock.recvfrom(buffer_size)
             if len(data) > 15:

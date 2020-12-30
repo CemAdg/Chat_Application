@@ -13,7 +13,6 @@ host_address = (hosts.myIP, ports.server)
 buffer_size = 1024
 unicode = 'utf-8'
 
-leader_crashed = False
 server_exist = False
 server_running = False
 neighbour_server = ''
@@ -65,9 +64,10 @@ if __name__ == '__main__':
         try:
             server_exist = True if hosts.myIP in hosts.server_list else server_exist
 
-            if not server_exist:
-                multicast_sender = send_multicast.sending_request_to_multicast()
+            if not server_exist or hosts.leader_crashed or hosts.non_leader_crashed:
+                multicast_sender = send_multicast.sending_request_to_multicast(hosts.non_leader_crashed)
                 new_thread(receive_multicast.starting_multicast, ()) if not multicast_sender else None
+                hosts.non_leader_crashed = False
 
             time.sleep(0.5)
 

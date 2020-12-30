@@ -7,5 +7,8 @@ sock.connect(("8.8.8.8", 80))
 myIP = sock.getsockname()[0]
 
 leader = ''
+leader_crashed = False
+non_leader_crashed = False
 server_list = []
 connections = []
+
