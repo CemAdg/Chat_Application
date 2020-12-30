@@ -36,7 +36,7 @@ def client_handler(connection, address):
                 break
             for connection in hosts.connections:
                 connection.send(f'{address[0]} said: {data.decode(unicode)}'.encode(unicode))
-            print(f'Messsage from {address[0]} ==> {data.decode(unicode)}')
+            print(f'Message from {address[0]} ==> {data.decode(unicode)}')
         except KeyboardInterrupt:
             print(f'No Connection')
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         try:
             server_exist = True if hosts.myIP in hosts.server_list else server_exist
 
-            if not server_exist or leader_crashed:
+            if not server_exist:
                 multicast_sender = send_multicast.sending_request_to_multicast()
                 new_thread(receive_multicast.starting_multicast, ()) if not multicast_sender else None
 
@@ -84,6 +84,8 @@ if __name__ == '__main__':
             time.sleep(3)
 
             print(f'[Heartbeat] {heartbeat.start_heartbeat()}', file=sys.stderr) if neighbour_server else None
+
+            # new_thread(heartbeat.start_heartbeat, ()) if neighbour_server else None
 
         except KeyboardInterrupt:
             print(f'\nClosing Server on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
