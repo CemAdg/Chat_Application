@@ -23,7 +23,7 @@ def send_data_to_server(address):
     if server_exist:
         print(f'[MULTICAST RECEIVER {hosts.myIP}] Sending Server List to {address[0]}',
               file=sys.stderr)
-        sock.sendto(pickle.dumps(hosts.server_list), address)
+        sock.sendto(pickle.dumps([hosts.server_list, hosts.leader]), address)
     else:
         print(f'[MULTICAST RECEIVER {hosts.myIP}] Sending acknowledgement to Multicast Sender {address[0]}',
               file=sys.stderr)
@@ -31,6 +31,7 @@ def send_data_to_server(address):
         print(f'[MULTICAST RECEIVER {hosts.myIP}] Append {address[0]} to Server List',
               file=sys.stderr)
         hosts.server_list.append(address[0])
+        hosts.leader = address[0] if len(hosts.server_list) == 1 else hosts.leader
 
 
 def starting_multicast():

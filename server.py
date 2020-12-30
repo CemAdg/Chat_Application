@@ -5,19 +5,18 @@ import sys
 import threading
 import time
 
-from cluster import hosts, ports, receive_multicast, send_multicast
+from cluster import hosts, ports, receive_multicast, send_multicast, leader_election, heartbeat
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = hosts.myIP
-port = ports.server
-host_address = (host, port)
+host_address = (hosts.myIP, ports.server)
 buffer_size = 1024
 unicode = 'utf-8'
 
-is_leader = bool(input())
 leader_crashed = False
 server_exist = False
+server_running = False
+neighbour_server = ''
 
 
 def new_thread(target, args):
@@ -31,7 +30,7 @@ def client_handler(connection, address):
         try:
             data = connection.recv(buffer_size)
             if not data:
-                print(f'{address[0]} disconnected')
+                print(f'{address[0]} disconnected\n')
                 hosts.connections.remove(connection)
                 connection.close()
                 break
@@ -43,16 +42,18 @@ def client_handler(connection, address):
 
 
 def start_binding():
+    global server_running
     sock.bind(host_address)
     sock.listen()
-    print(f'Starting Server and listening on IP {host} with PORT {port}', file=sys.stderr)
+    print(f'Starting Server and listening on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
+    server_running = True
 
     while True:
         try:
             connection, address = sock.accept()
-            new_thread(client_handler, (connection, address))
             hosts.connections.append(connection)
-            print(f'{address[0]} connected')
+            print(f'\n{address[0]} connected')
+            new_thread(client_handler, (connection, address))
         except KeyboardInterrupt:
             sock.close()
             print("\nSocket closed")
@@ -62,83 +63,28 @@ def start_binding():
 if __name__ == '__main__':
     while True:
         try:
-            server_exist = True if host in hosts.server_list else server_exist
+            server_exist = True if hosts.myIP in hosts.server_list else server_exist
 
             if not server_exist or leader_crashed:
                 multicast_sender = send_multicast.sending_request_to_multicast()
-                new_thread(receive_multicast.starting_multicast, ()) if is_leader and not multicast_sender else None
-                #new_thread(start_binding, ()) if is_leader and multicast_sender else None
-            time.sleep(1)
-            print(hosts.server_list)
+                new_thread(receive_multicast.starting_multicast, ()) if not multicast_sender else None
+
+            time.sleep(0.5)
+
+            neighbour_server = leader_election.start_leader_election(hosts.server_list, hosts.myIP)
+
+            print(f'\n[This Server_running] ==> {server_running}')
+            print(f'[Server List] {hosts.server_list} ==> Leader: {hosts.leader}')
+            print(f'[Neighbour] ==> {neighbour_server}')
+
+            time.sleep(0.5)
+
+            new_thread(start_binding, ()) if not server_running else None
+
             time.sleep(3)
 
-            #leader_crashed = bool(input()) if server_exist else leader_crashed
+            print(f'[Heartbeat] {heartbeat.start_heartbeat()}', file=sys.stderr) if neighbour_server else None
 
-            #is_leader = True if leader_crashed else is_leader
-
-
-            """sock.bind(host_address)
-            sock.listen()
-            print(f'Starting Server and listening on IP {host} with PORT {port}', file=sys.stderr)
-            sock.accept()"""
         except KeyboardInterrupt:
-            print(f'\nClosing Server on IP {host} with PORT {port}', file=sys.stderr)
+            print(f'\nClosing Server on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
             break
-
-
-
-
-
-
-
-
-
-
-
-
-"""if __name__ == "__main__":
-    t1 = threading.Thread(target=receive_multicast.starting_multicast, args=())
-    t1.start()
-    time.sleep(1)
-    for thread in threading.enumerate():
-        print(thread.name)
-
-    time.sleep(1)
-    if send_multicast.sending_request_to_multicast():
-        server_list = receive_multicast.server_list
-    for thread in threading.enumerate():
-        print(thread.name)
-    time.sleep(1)
-    print()
-    #print(f'Leader Server {leader_server}')
-    print(f'Server List {server_list}')
-
-    sock.bind(host_address)
-    sock.listen(1)
-    print(f'Server is running and listening on IP {host} with PORT {port}', file=sys.stderr)
-    
-    for thread in threading.enumerate():
-    print(thread.name)
-    
-    # leader_election.start_leader_election(server_list, leader)
-
-    while True:
-        try:
-            c, a = sock.accept()
-            cThread = threading.Thread(target=handler, args=(c, a))
-            cThread.daemon = True
-            cThread.start()
-            connections.append(c)
-            print(f'{a[0]}:{a[1]} connected')
-            time.sleep(0.05)
-            print('RUNNING THREADS', file=sys.stderr)
-            time.sleep(0.05)
-            for thread in threading.enumerate():
-                print(thread.name)
-            time.sleep(0.05)
-            print('---------------', file=sys.stderr)
-        except KeyboardInterrupt:
-            sock.close()
-            print("\nConnection closed")
-            break
-"""
