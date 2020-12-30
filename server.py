@@ -15,55 +15,66 @@ host_address = (host, port)
 buffer_size = 1024
 unicode = 'utf-8'
 
-isLeader = bool(input())
+is_leader = bool(input())
+leader_crashed = False
 server_exist = False
+
+
+def new_thread(target, args):
+    t = threading.Thread(target=target, args=args)
+    t.daemon = True
+    t.start()
+
+
+def client_handler(connection, address):
+    while True:
+        try:
+            data = connection.recv(buffer_size)
+            if not data:
+                print(f'{address[0]} disconnected')
+                hosts.connections.remove(connection)
+                connection.close()
+                break
+            for connection in hosts.connections:
+                connection.send(f'{address[0]} said: {data.decode(unicode)}'.encode(unicode))
+            print(f'Messsage from {address[0]} ==> {data.decode(unicode)}')
+        except KeyboardInterrupt:
+            print(f'No Connection')
+
+
+def start_binding():
+    sock.bind(host_address)
+    sock.listen()
+    print(f'Starting Server and listening on IP {host} with PORT {port}', file=sys.stderr)
+
+    while True:
+        try:
+            connection, address = sock.accept()
+            new_thread(client_handler, (connection, address))
+            hosts.connections.append(connection)
+            print(f'{address[0]} connected')
+        except KeyboardInterrupt:
+            sock.close()
+            print("\nSocket closed")
+            break
+
 
 if __name__ == '__main__':
     while True:
         try:
-            for server in hosts.server_list:
-                server_exist = True if server[0] == host_address[0] else server_exist
+            server_exist = True if host in hosts.server_list else server_exist
 
-            if not server_exist:
+            if not server_exist or leader_crashed:
                 multicast_sender = send_multicast.sending_request_to_multicast()
-                if isLeader and not multicast_sender:
-                    t1 = threading.Thread(target=receive_multicast.starting_multicast, args=())
-                    t1.daemon = True
-                    t1.start()
-            time.sleep(1)
-            print('loop done')
-            time.sleep(3)
-
-
-
-
-            """for server in hosts.server_list:
-                server_exist = True if server[0] == host_address[0] else server_exist
-
-            if server_exist:
-                send_multicast.update_server_list()
-            else:
-                time.sleep(1)
-                multicast_sender = send_multicast.sending_request_to_multicast()
-                if not multicast_sender:
-                    t1 = threading.Thread(target=receive_multicast.starting_multicast, args=())
-                    t1.daemon = True
-                    t1.start()
+                new_thread(receive_multicast.starting_multicast, ()) if is_leader and not multicast_sender else None
+                #new_thread(start_binding, ()) if is_leader and multicast_sender else None
             time.sleep(1)
             print(hosts.server_list)
-            time.sleep(5)"""
+            time.sleep(3)
 
+            #leader_crashed = bool(input()) if server_exist else leader_crashed
 
-            """t2 = threading.Thread(target=send_multicast.update_server_list(), args=())
-            t2.daemon = True
-            t2.start()
-            time.sleep(1)
-            receive_multicast.send_server_list()
-            time.sleep(2)
-            #print(send_multicast.update_server_list())
-            #print(hosts.server_list)
-            time.sleep(10)"""
-
+            #is_leader = True if leader_crashed else is_leader
 
 
             """sock.bind(host_address)
@@ -72,7 +83,6 @@ if __name__ == '__main__':
             sock.accept()"""
         except KeyboardInterrupt:
             print(f'\nClosing Server on IP {host} with PORT {port}', file=sys.stderr)
-            sock.close()
             break
 
 

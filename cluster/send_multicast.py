@@ -13,7 +13,7 @@ unicode = 'utf-8'
 # Create the datagram socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# Set the timeut so the socket does not block indefinitely when trying to receiver data
+# Set the timeout so the socket does not block indefinitely when trying to receiver data
 sock.settimeout(0.5)
 
 # Set the time-to-live for messages to 1 so they do not go past the local network segment
@@ -47,8 +47,15 @@ def sending_request_to_multicast():
         while True:
             try:
                 data, server = sock.recvfrom(buffer_size)
-                print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver response with --{data.decode(unicode)}-- from {server}',
-                      file=sys.stderr)
+                if len(data) > 15:
+                    print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver sends the Server list',
+                          file=sys.stderr)
+                    hosts.server_list = pickle.loads(data)
+                    print(f'[MULTICAST SENDER {hosts.myIP}] Server list UPDATED',
+                          file=sys.stderr)
+                else:
+                    print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver response with --{data.decode(unicode)}-- from {server}',
+                          file=sys.stderr)
                 return True
             except socket.timeout:
                 print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver not detected',

@@ -7,3 +7,4 @@ sock.connect(("8.8.8.8", 80))
 myIP = sock.getsockname()[0]
 
 server_list = []
+connections = []

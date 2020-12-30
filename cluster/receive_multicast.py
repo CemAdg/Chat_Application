@@ -12,18 +12,25 @@ server_address = ('', ports.multicast)
 buffer_size = 1024
 unicode = 'utf-8'
 
-server_list = []
-
 # Create the socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
-def send_server_list():
-    global server_list
-    for server in server_list:
-        print(f'[MULTICAST RECEIVER {hosts.myIP}] Sending Server List to Multicast Sender {server}',
+def send_data_to_server(address):
+    server_exist = False
+    server_exist = True if address[0] in hosts.server_list else server_exist
+
+    if server_exist:
+        print(f'[MULTICAST RECEIVER {hosts.myIP}] Sending Server List to {address[0]}',
               file=sys.stderr)
-        sock.sendto(pickle.dumps(server_list), server)
+        sock.sendto(pickle.dumps(hosts.server_list), address)
+    else:
+        print(f'[MULTICAST RECEIVER {hosts.myIP}] Sending acknowledgement to Multicast Sender {address[0]}',
+              file=sys.stderr)
+        sock.sendto('acknowledgement'.encode(unicode), address)
+        print(f'[MULTICAST RECEIVER {hosts.myIP}] Append {address[0]} to Server List',
+              file=sys.stderr)
+        hosts.server_list.append(address[0])
 
 
 def starting_multicast():
@@ -42,15 +49,10 @@ def starting_multicast():
         # Receive/respond loop
         while True:
             try:
-                data, address = sock.recvfrom(buffer_size)
-                print(f'[MULTICAST RECEIVER {hosts.myIP}] Request detected from {address}',
+                address = sock.recvfrom(buffer_size)[1]
+                print(f'[MULTICAST RECEIVER {hosts.myIP}] Request detected from {address[0]}',
                       file=sys.stderr)
-                print(f'[MULTICAST RECEIVER {hosts.myIP}] Sending acknowledgement to Multicast Sender {address}',
-                      file=sys.stderr)
-                sock.sendto('acknowledgement'.encode(unicode), address)
-                print(f'[MULTICAST RECEIVER {hosts.myIP}] Adding {address} to Server List',
-                      file=sys.stderr)
-                hosts.server_list.append(address)
+                send_data_to_server(address)
             except KeyboardInterrupt:
                 print(f'[MULTICAST RECEIVER {hosts.myIP}] Closing UDP Socket',
                       file=sys.stderr)
