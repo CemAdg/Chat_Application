@@ -3,8 +3,8 @@ import threading
 import sys
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = ''
-port = 10000
+host = '19.10.19.20'
+port = 10001
 hAddress = (host, port)
 bSize = 1024
 unicode = 'utf-8'
