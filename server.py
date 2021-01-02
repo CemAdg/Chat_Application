@@ -67,6 +67,7 @@ if __name__ == '__main__':
     if not multicast_receiver:
         hosts.server_list.append(hosts.myIP)
         hosts.leader = hosts.myIP
+
     new_thread(receive_multicast.starting_multicast_receiver, ())
     new_thread(heartbeat.start_heartbeat, ())
 
