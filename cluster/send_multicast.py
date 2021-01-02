@@ -20,12 +20,12 @@ ttl = struct.pack('b', 1)
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
 
-def sending_request_to_multicast(server_list, leader, leader_crashed, non_leader_crashed):
+def sending_request_to_multicast(server_list, leader, leader_crashed, replica_crashed):
 
     # Send data to the Multicast address
     print(f'\n[MULTICAST SENDER {hosts.myIP}] Sending data to Multicast Receivers {multicast_address}',
           file=sys.stderr)
-    message = pickle.dumps([server_list, leader, leader_crashed, non_leader_crashed])
+    message = pickle.dumps([server_list, leader, leader_crashed, replica_crashed])
     sock.sendto(message, multicast_address)
     try:
         data, address = sock.recvfrom(buffer_size)
