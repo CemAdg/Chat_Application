@@ -3,7 +3,8 @@
 import socket
 import sys
 import threading
-import time
+
+from time import sleep
 
 from cluster import hosts, ports, receive_multicast, send_multicast, leader_election, heartbeat
 
@@ -15,13 +16,6 @@ unicode = 'utf-8'
 
 server_exist = False
 server_running = False
-neighbour_server = ''
-
-
-def new_thread(target, args):
-    t = threading.Thread(target=target, args=args)
-    t.daemon = True
-    t.start()
 
 
 def client_handler(connection, address):
@@ -44,14 +38,15 @@ def start_binding():
     global server_running
     sock.bind(host_address)
     sock.listen()
-    print(f'Starting Server and listening on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
+    print(f'\n[SERVER] Starting and listening on IP {hosts.myIP} with PORT {ports.server}',
+          file=sys.stderr)
     server_running = True
 
     while True:
         try:
             connection, address = sock.accept()
             hosts.connections.append(connection)
-            print(f'\n{address[0]} connected')
+            print(f'{address[0]} connected')
             new_thread(client_handler, (connection, address))
         except KeyboardInterrupt:
             sock.close()
@@ -59,8 +54,51 @@ def start_binding():
             break
 
 
+def new_thread(target, args):
+    t = threading.Thread(target=target, args=args)
+    t.daemon = True
+    t.start()
+
+
 if __name__ == '__main__':
+
+    multicast_receiver = send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.non_leader_crashed)
+
+    if not multicast_receiver:
+        hosts.server_list.append(hosts.myIP)
+        hosts.leader = hosts.myIP
+    new_thread(receive_multicast.starting_multicast_receiver, ())
+    new_thread(heartbeat.start_heartbeat, ())
+
     while True:
+        try:
+            if hosts.leader == hosts.myIP and hosts.network_changed:
+                sleep(2)
+                send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.non_leader_crashed)
+
+            if hosts.network_changed:
+                print(f'\n[SERVER] Running ==> {server_running}')
+                print(f'[SERVER] List: {hosts.server_list} ==> Leader: {hosts.leader}')
+                print(f'[SERVER] Neighbour ==> {hosts.neighbour}')
+                print(f'[SERVER] Network Changed ==> {hosts.network_changed}')
+
+            hosts.network_changed = False
+
+            sleep(2)
+            new_thread(start_binding, ()) if not server_running else None
+        except KeyboardInterrupt:
+            print(f'\nClosing Server on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
+            break
+
+
+
+
+
+
+
+
+
+    """while True:
         try:
             server_exist = True if hosts.myIP in hosts.server_list else server_exist
 
@@ -89,4 +127,4 @@ if __name__ == '__main__':
 
         except KeyboardInterrupt:
             print(f'\nClosing Server on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
-            break
+            break"""
