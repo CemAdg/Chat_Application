@@ -10,12 +10,12 @@ from cluster import hosts, ports, receive_multicast, send_multicast, leader_elec
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 host_address = (hosts.myIP, ports.server)
 buffer_size = 1024
 unicode = 'utf-8'
 
 server_exist = False
-server_running = False
 
 
 def client_handler(connection, address):
@@ -23,7 +23,8 @@ def client_handler(connection, address):
         try:
             data = connection.recv(buffer_size)
             if not data:
-                print(f'{address[0]} disconnected\n')
+                sleep(0.5)
+                print(f'{address[0]} disconnected')
                 hosts.connections.remove(connection)
                 connection.close()
                 break
@@ -35,12 +36,12 @@ def client_handler(connection, address):
 
 
 def start_binding():
-    global server_running
+
     sock.bind(host_address)
     sock.listen()
     print(f'\n[SERVER] Starting and listening on IP {hosts.myIP} with PORT {ports.server}',
           file=sys.stderr)
-    server_running = True
+    hosts.server_running = True
 
     while True:
         try:
@@ -62,32 +63,34 @@ def new_thread(target, args):
 
 if __name__ == '__main__':
 
-    multicast_receiver = send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.non_leader_crashed)
+    multicast_receiver = send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed)
 
     if not multicast_receiver:
         hosts.server_list.append(hosts.myIP)
         hosts.leader = hosts.myIP
 
     new_thread(receive_multicast.starting_multicast_receiver, ())
-    new_thread(heartbeat.start_heartbeat, ())
 
     while True:
         try:
-            if hosts.leader == hosts.myIP and hosts.network_changed:
+            if hosts.leader == hosts.myIP and hosts.network_changed or hosts.replica_crashed:
                 sleep(2)
-                send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.non_leader_crashed)
+                send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed)
+                hosts.replica_crashed = ''
 
-            if hosts.network_changed:
-                print(f'\n[SERVER] Running ==> {server_running}')
+            if hosts.leader == hosts.myIP:
+                print(f'\n[SERVER] Running ==> {hosts.server_running}')
                 print(f'[SERVER] List: {hosts.server_list} ==> Leader: {hosts.leader}')
                 print(f'[SERVER] Neighbour ==> {hosts.neighbour}')
                 print(f'[SERVER] Network Changed ==> {hosts.network_changed}')
 
             hosts.network_changed = False
+            sleep(3)
+            new_thread(start_binding, ()) if not hosts.server_running else None
+            new_thread(heartbeat.start_heartbeat, ()) if not hosts.heartbeat_running and hosts.server_running else None
 
-            sleep(2)
-            new_thread(start_binding, ()) if not server_running else None
         except KeyboardInterrupt:
+            sock.close()
             print(f'\nClosing Server on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
             break
 
