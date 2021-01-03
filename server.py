@@ -6,12 +6,12 @@ import threading
 
 from time import sleep
 
-from cluster import hosts, ports, receive_multicast, send_multicast, leader_election, heartbeat
+from cluster import variable_list, receive_multicast, send_multicast, leader_election, heartbeat
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-host_address = (hosts.myIP, ports.server)
+host_address = (variable_list.myIP, variable_list.server_port)
 buffer_size = 1024
 unicode = 'utf-8'
 
@@ -25,10 +25,10 @@ def client_handler(connection, address):
             if not data:
                 sleep(0.5)
                 print(f'{address[0]} disconnected')
-                hosts.connections.remove(connection)
+                variable_list.connections.remove(connection)
                 connection.close()
                 break
-            for connection in hosts.connections:
+            for connection in variable_list.connections:
                 connection.send(f'{address[0]} said: {data.decode(unicode)}'.encode(unicode))
             print(f'Message from {address[0]} ==> {data.decode(unicode)}')
         except KeyboardInterrupt:
@@ -39,14 +39,14 @@ def start_binding():
 
     sock.bind(host_address)
     sock.listen()
-    print(f'\n[SERVER] Starting and listening on IP {hosts.myIP} with PORT {ports.server}',
+    print(f'\n[SERVER] Starting and listening on IP {variable_list.myIP} with PORT {variable_list.server_port}',
           file=sys.stderr)
-    hosts.server_running = True
+    variable_list.server_running = True
 
     while True:
         try:
             connection, address = sock.accept()
-            hosts.connections.append(connection)
+            variable_list.connections.append(connection)
             print(f'{address[0]} connected')
             new_thread(client_handler, (connection, address))
         except KeyboardInterrupt:
@@ -63,35 +63,35 @@ def new_thread(target, args):
 
 if __name__ == '__main__':
 
-    multicast_receiver = send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed)
+    multicast_receiver = send_multicast.sending_request_to_multicast(variable_list.server_list, variable_list.leader, variable_list.leader_crashed, variable_list.replica_crashed)
 
     if not multicast_receiver:
-        hosts.server_list.append(hosts.myIP)
-        hosts.leader = hosts.myIP
+        variable_list.server_list.append(variable_list.myIP)
+        variable_list.leader = variable_list.myIP
 
     new_thread(receive_multicast.starting_multicast_receiver, ())
 
     while True:
         try:
-            if hosts.leader == hosts.myIP and hosts.network_changed or hosts.replica_crashed:
+            if variable_list.leader == variable_list.myIP and variable_list.network_changed or variable_list.replica_crashed:
                 sleep(2)
-                send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed)
-                hosts.replica_crashed = ''
+                send_multicast.sending_request_to_multicast(variable_list.server_list, variable_list.leader, variable_list.leader_crashed, variable_list.replica_crashed)
+                variable_list.replica_crashed = ''
 
-            if hosts.leader == hosts.myIP:
-                print(f'\n[SERVER] Running ==> {hosts.server_running}')
-                print(f'[SERVER] List: {hosts.server_list} ==> Leader: {hosts.leader}')
-                print(f'[SERVER] Neighbour ==> {hosts.neighbour}')
-                print(f'[SERVER] Network Changed ==> {hosts.network_changed}')
+            if variable_list.leader == variable_list.myIP:
+                print(f'\n[SERVER] Running ==> {variable_list.server_running}')
+                print(f'[SERVER] List: {variable_list.server_list} ==> Leader: {variable_list.leader}')
+                print(f'[SERVER] Neighbour ==> {variable_list.neighbour}')
+                print(f'[SERVER] Network Changed ==> {variable_list.network_changed}')
 
-            hosts.network_changed = False
+            variable_list.network_changed = False
             sleep(3)
-            new_thread(start_binding, ()) if not hosts.server_running else None
-            new_thread(heartbeat.start_heartbeat, ()) if not hosts.heartbeat_running and hosts.server_running else None
+            new_thread(start_binding, ()) if not variable_list.server_running else None
+            new_thread(heartbeat.start_heartbeat, ()) if not variable_list.heartbeat_running and variable_list.server_running else None
 
         except KeyboardInterrupt:
             sock.close()
-            print(f'\nClosing Server on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
+            print(f'\nClosing Server on IP {variable_list.myIP} with PORT {variable_list.server_port}', file=sys.stderr)
             break
 
 
