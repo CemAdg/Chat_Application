@@ -6,8 +6,8 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.connect(("8.8.8.8", 80))
 myIP = sock.getsockname()[0]
 
-#multicast_ipaddress = '224.3.29.71'
-multicast_ipaddress = '224.0.0.1'
+multicast_ipaddress = '224.3.29.71'
+#multicast_ipaddress = '224.0.0.2'
 
 # Ports
 multicast_port = 10000
