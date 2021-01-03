@@ -6,49 +6,49 @@ import threading
 
 from time import sleep
 
-from cluster import variable_list, receive_multicast, send_multicast, leader_election, heartbeat
+from cluster import app_init, receive_multicast, send_multicast, leader_election, heartbeat
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-host_address = (variable_list.myIP, variable_list.server_port)
+host_address = (app_init.myIP, app_init.server_port)
 buffer_size = 1024
 unicode = 'utf-8'
 
 server_exist = False
 
 
-def client_handler(connection, address):
+def connections_handler(connection, address):
     while True:
         try:
             data = connection.recv(buffer_size)
             if not data:
                 sleep(0.5)
                 print(f'{address[0]} disconnected')
-                variable_list.connections.remove(connection)
+                app_init.connections.remove(connection)
                 connection.close()
                 break
-            for connection in variable_list.connections:
+            for connection in app_init.connections:
                 connection.send(f'{address[0]} said: {data.decode(unicode)}'.encode(unicode))
             print(f'Message from {address[0]} ==> {data.decode(unicode)}')
         except KeyboardInterrupt:
             print(f'No Connection')
 
 
-def start_binding():
+def start_server_binding():
 
     sock.bind(host_address)
     sock.listen()
-    print(f'\n[SERVER] Starting and listening on IP {variable_list.myIP} with PORT {variable_list.server_port}',
+    print(f'\n[SERVER] Starting and listening on IP {app_init.myIP} with PORT {app_init.server_port}',
           file=sys.stderr)
-    variable_list.server_running = True
+    app_init.server_running = True
 
     while True:
         try:
             connection, address = sock.accept()
-            variable_list.connections.append(connection)
+            app_init.connections.append(connection)
             print(f'{address[0]} connected')
-            new_thread(client_handler, (connection, address))
+            new_thread(connections_handler, (connection, address))
         except KeyboardInterrupt:
             sock.close()
             print("\nSocket closed")
@@ -63,35 +63,35 @@ def new_thread(target, args):
 
 if __name__ == '__main__':
 
-    multicast_receiver = send_multicast.sending_request_to_multicast(variable_list.server_list, variable_list.leader, variable_list.leader_crashed, variable_list.replica_crashed)
+    multicast_receiver = send_multicast.sending_request_to_multicast(app_init.server_list, app_init.server_leader, app_init.server_leader_crashed, app_init.server_replica_crashed)
 
     if not multicast_receiver:
-        variable_list.server_list.append(variable_list.myIP)
-        variable_list.leader = variable_list.myIP
+        app_init.server_list.append(app_init.myIP)
+        app_init.server_leader = app_init.myIP
 
     new_thread(receive_multicast.starting_multicast_receiver, ())
 
     while True:
         try:
-            if variable_list.leader == variable_list.myIP and variable_list.network_changed or variable_list.replica_crashed:
+            if app_init.server_leader == app_init.myIP and app_init.network_changed or app_init.server_replica_crashed:
                 sleep(2)
-                send_multicast.sending_request_to_multicast(variable_list.server_list, variable_list.leader, variable_list.leader_crashed, variable_list.replica_crashed)
-                variable_list.replica_crashed = ''
+                send_multicast.sending_request_to_multicast(app_init.server_list, app_init.server_leader, app_init.server_leader_crashed, app_init.server_replica_crashed)
+                app_init.server_replica_crashed = ''
 
-            if variable_list.leader == variable_list.myIP:
-                print(f'\n[SERVER] Running ==> {variable_list.server_running}')
-                print(f'[SERVER] List: {variable_list.server_list} ==> Leader: {variable_list.leader}')
-                print(f'[SERVER] Neighbour ==> {variable_list.neighbour}')
-                print(f'[SERVER] Network Changed ==> {variable_list.network_changed}')
+            if app_init.server_leader == app_init.myIP:
+                print(f'\n[SERVER] Running ==> {app_init.server_running}')
+                print(f'[SERVER] List: {app_init.server_list} ==> Leader: {app_init.server_leader}')
+                print(f'[SERVER] Neighbour ==> {app_init.server_neighbour}')
+                print(f'[SERVER] Network Changed ==> {app_init.network_changed}')
 
-            variable_list.network_changed = False
+            app_init.network_changed = False
             sleep(3)
-            new_thread(start_binding, ()) if not variable_list.server_running else None
-            new_thread(heartbeat.start_heartbeat, ()) if not variable_list.heartbeat_running and variable_list.server_running else None
+            new_thread(start_server_binding, ()) if not app_init.server_running else None
+            new_thread(heartbeat.start_heartbeat, ()) if not app_init.heartbeat_running and app_init.server_running else None
 
         except KeyboardInterrupt:
             sock.close()
-            print(f'\nClosing Server on IP {variable_list.myIP} with PORT {variable_list.server_port}', file=sys.stderr)
+            print(f'\nClosing Server on IP {app_init.myIP} with PORT {app_init.server_port}', file=sys.stderr)
             break
 
 

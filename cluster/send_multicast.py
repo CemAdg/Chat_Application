@@ -3,9 +3,9 @@ import struct
 import sys
 import pickle
 
-from cluster import variable_list
+from cluster import app_init
 
-multicast_address = (variable_list.multicast_ipaddress, variable_list.multicast_port)
+multicast_address = (app_init.multicast_ipaddress, app_init.multicast_port)
 buffer_size = 1024
 unicode = 'utf-8'
 
@@ -23,17 +23,17 @@ sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 def sending_request_to_multicast(server_list, leader, leader_crashed, replica_crashed):
 
     # Send data to the Multicast address
-    print(f'\n[MULTICAST SENDER {variable_list.myIP}] Sending data to Multicast Receivers {multicast_address}',
+    print(f'\n[MULTICAST SENDER {app_init.myIP}] Sending data to Multicast Receivers {multicast_address}',
           file=sys.stderr)
     message = pickle.dumps([server_list, leader, leader_crashed, replica_crashed])
     sock.sendto(message, multicast_address)
     try:
         data, address = sock.recvfrom(buffer_size)
-        if variable_list.leader == variable_list.myIP:
-            print(f'[MULTICAST SENDER {variable_list.myIP}] All Servers have been updated',
+        if app_init.server_leader == app_init.myIP:
+            print(f'[MULTICAST SENDER {app_init.myIP}] All Servers have been updated',
                   file=sys.stderr)
         return True
     except socket.timeout:
-        print(f'[MULTICAST SENDER {variable_list.myIP}] Multicast Receiver not detected',
+        print(f'[MULTICAST SENDER {app_init.myIP}] Multicast Receiver not detected',
               file=sys.stderr)
         return False

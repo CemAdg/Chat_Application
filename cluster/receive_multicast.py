@@ -3,11 +3,11 @@ import struct
 import sys
 import pickle
 
-from cluster import variable_list
+from cluster import app_init
 
 
-multicast_ip = variable_list.multicast_ipaddress
-server_address = ('', variable_list.multicast_port)
+multicast_ip = app_init.multicast_ipaddress
+server_address = ('', app_init.multicast_port)
 buffer_size = 1024
 unicode = 'utf-8'
 
@@ -22,7 +22,7 @@ def starting_multicast_receiver():
     group = socket.inet_aton(multicast_ip)
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-    print(f'\n[MULTICAST RECEIVER {variable_list.myIP}] Starting UDP Socket and listening on Port {variable_list.multicast_port}',
+    print(f'\n[MULTICAST RECEIVER {app_init.myIP}] Starting UDP Socket and listening on Port {app_init.multicast_port}',
           file=sys.stderr)
 
     # Receive/respond loop
@@ -30,20 +30,20 @@ def starting_multicast_receiver():
         try:
             data, address = sock.recvfrom(buffer_size)
 
-            print(f'\n[MULTICAST RECEIVER {variable_list.myIP}] Received data from {address[0]}',
+            print(f'\n[MULTICAST RECEIVER {app_init.myIP}] Received data from {address[0]}',
                   file=sys.stderr)
 
             if len(pickle.loads(data)[0]) == 0:
-                variable_list.server_list.append(address[0]) if address[0] not in variable_list.server_list else variable_list.server_list
-            elif pickle.loads(data)[1] and variable_list.leader != variable_list.myIP or pickle.loads(data)[3]:
-                variable_list.server_list = pickle.loads(data)[0]
-                variable_list.leader = pickle.loads(data)[1]
-                print(f'[MULTICAST RECEIVER {variable_list.myIP}] All Data have been updated',
+                app_init.server_list.append(address[0]) if address[0] not in app_init.server_list else app_init.server_list
+            elif pickle.loads(data)[1] and app_init.server_leader != app_init.myIP or pickle.loads(data)[3]:
+                app_init.server_list = pickle.loads(data)[0]
+                app_init.server_leader = pickle.loads(data)[1]
+                print(f'[MULTICAST RECEIVER {app_init.myIP}] All Data have been updated',
                       file=sys.stderr)
 
             sock.sendto('ack'.encode(unicode), address)
-            variable_list.network_changed = True
+            app_init.network_changed = True
         except KeyboardInterrupt:
-            print(f'[MULTICAST RECEIVER {variable_list.myIP}] Closing UDP Socket',
+            print(f'[MULTICAST RECEIVER {app_init.myIP}] Closing UDP Socket',
                   file=sys.stderr)
             break

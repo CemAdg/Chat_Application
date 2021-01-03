@@ -1,4 +1,4 @@
-# Variable list
+# Variable Collection
 import socket
 
 # Get own Machine IP
@@ -14,12 +14,12 @@ multicast_port = 10000
 server_port = 10001
 
 # Server types
-leader = ''
-neighbour = ''
+server_leader = ''
+server_neighbour = ''
 
 # Server Crash status
-leader_crashed = ''
-replica_crashed = ''
+server_leader_crashed = ''
+server_replica_crashed = ''
 
 # General Server status
 server_running = False
