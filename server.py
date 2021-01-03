@@ -18,19 +18,31 @@ unicode = 'utf-8'
 server_exist = False
 
 
-def connections_handler(connection, address):
+def clients_handler(connection, address):
     while True:
         try:
             data = connection.recv(buffer_size)
-            if not data:
+            #check if no data received from a connection or a chat member sent a {quit}
+            if not data or data[0] == '{quit}':
                 sleep(0.5)
-                print(f'{address[0]} disconnected')
+
+                # if the disconnected address is given in the client_list, a chat member left the chat
+                if address[0] in app_init.client_list:
+                    print(f'Chat member {data[1]} with {address[0]} disconnected')
+                    app_init.client_list.remove(address)
+                    app_init.network_changed = True
+                # other connections refer to server heartbeats
+                else:
+                    print(f'{address[0]} disconnected')
+
                 app_init.connections.remove(connection)
                 connection.close()
                 break
-            for connection in app_init.connections:
-                connection.send(f'{address[0]} said: {data.decode(unicode)}'.encode(unicode))
-            print(f'Message from {address[0]} ==> {data.decode(unicode)}')
+
+            for connection in app_init.client_list:
+                connection.send(f'{address} said: {data.decode(unicode)}'.encode(unicode))
+            print(f'Message from {address} ==> {data.decode(unicode)}')
+
         except KeyboardInterrupt:
             print(f'No Connection')
 
@@ -48,7 +60,7 @@ def start_server_binding():
             connection, address = sock.accept()
             app_init.connections.append(connection)
             print(f'{address[0]} connected')
-            new_thread(connections_handler, (connection, address))
+            new_thread(clients_handler, (connection, address))
         except KeyboardInterrupt:
             sock.close()
             print("\nSocket closed")
@@ -73,9 +85,11 @@ if __name__ == '__main__':
 
     while True:
         try:
+            # if a server replica crashes or the network was changed (client list as well as server list),
+            # then the updated lists will be sent to all server who listen on the the multicast group
             if app_init.server_leader == app_init.myIP and app_init.network_changed or app_init.server_replica_crashed:
                 sleep(2)
-                send_multicast.sending_request_to_multicast(app_init.server_list, app_init.server_leader, app_init.server_leader_crashed, app_init.server_replica_crashed)
+                send_multicast.sending_request_to_multicast(app_init.server_list, app_init.server_leader, app_init.server_leader_crashed, app_init.server_replica_crashed, app_init.client_list)
                 app_init.server_replica_crashed = ''
 
             if app_init.server_leader == app_init.myIP:
