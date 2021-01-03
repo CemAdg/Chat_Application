@@ -9,8 +9,10 @@ multicast = '224.3.29.71'
 
 leader = ''
 leader_crashed = ''
-non_leader_crashed = ''
+replica_crashed = ''
 neighbour = ''
+server_running = False
+heartbeat_running = False
 network_changed = False
 server_list = []
 connections = []
