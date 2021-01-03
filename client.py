@@ -120,3 +120,10 @@ if __name__ == "__main__":
 
     Thread(target=UI_show_messages).start()
     Thread(target=UI_send_messages).start()
+
+
+
+# Send join message to multicast address and receive server leader address
+# Connect to server leader address
+# listen multicast for server leader crash messages: receive new server leader address
+# Disconnect crashed server and connect to new leader

@@ -2,6 +2,7 @@ import socket
 import struct
 import sys
 import pickle
+from time import sleep
 
 from cluster import app_init
 
@@ -39,3 +40,18 @@ def sending_request_to_multicast(server_list, leader, leader_crashed, replica_cr
               file=sys.stderr)
         return False
 
+
+def send_join_chat_message_to_multicast(client_membername):
+    # Send data to the Multicast address
+    print(f'\n[MULTICAST SENDER] {app_init.myIP} sending join chat request to Multicast Address {multicast_address}',
+          file=sys.stderr)
+    message = pickle.dumps(['JOIN',client_membername])
+    sock.sendto(message, multicast_address)
+    sleep(3)
+    try:
+        data, address = sock.recvfrom(buffer_size)
+
+    except Exception as e:
+        print(e)
+        print(f'[MULTICAST SENDER {app_init.myIP}] Multicast Receiver not detected -> chat server online',
+              file=sys.stderr)

@@ -38,14 +38,24 @@ def starting_multicast_receiver():
 
             if len(pickle.loads(data)[0]) == 0:
                 app_init.server_list.append(address[0]) if address[0] not in app_init.server_list else app_init.server_list
+                sock.sendto('ack'.encode(unicode), address)
+                app_init.network_changed = True
+
             elif pickle.loads(data)[1] and app_init.server_leader != app_init.myIP or pickle.loads(data)[3]:
                 app_init.server_list = pickle.loads(data)[0]
                 app_init.server_leader = pickle.loads(data)[1]
                 print(f'[MULTICAST RECEIVER {app_init.myIP}] All Data have been updated',
                       file=sys.stderr)
+                sock.sendto('ack'.encode(unicode), address)
+                app_init.network_changed = True
 
-            sock.sendto('ack'.encode(unicode), address)
-            app_init.network_changed = True
+            elif app_init.server_leader == app_init.myIP and pickle.loads(data)[0] == "JOIN":
+                print(f'[MULTICAST RECEIVER {app_init.myIP}] Client {address} wants to join the chat',
+                      file=sys.stderr)
+                app_init.client_list.append(address)
+                message = pickle.dumps([app_init.client_list, app_init.server_leader])
+                sock.sendto(message, address)
+
         except KeyboardInterrupt:
             print(f'[MULTICAST RECEIVER {app_init.myIP}] Closing UDP Socket',
                   file=sys.stderr)
