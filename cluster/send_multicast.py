@@ -33,7 +33,9 @@ def sending_request_to_multicast(server_list, leader, leader_crashed, replica_cr
             print(f'[MULTICAST SENDER {app_init.myIP}] All Servers have been updated',
                   file=sys.stderr)
         return True
-    except socket.timeout:
+    except Exception as e:
+        print(e)
         print(f'[MULTICAST SENDER {app_init.myIP}] Multicast Receiver not detected',
               file=sys.stderr)
         return False
+
