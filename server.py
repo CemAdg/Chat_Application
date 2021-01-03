@@ -3,6 +3,7 @@
 import socket
 import sys
 import threading
+import pickle
 
 from time import sleep
 
@@ -28,9 +29,16 @@ def clients_handler(connection, address):
 
                 # if the disconnected address is given in the client_list, a chat member left the chat
                 if address[0] in app_init.client_list:
-                    print(f'Chat member {data[1]} with {address[0]} disconnected')
+                    print(f'Chat member {address[0]} disconnected')
                     app_init.client_list.remove(address)
+                    app_init.client_left = True
                     app_init.network_changed = True
+
+                    for connection in app_init.connections:
+                        if connection in app_init.client_list:
+                            message = f'{address[0]} left the chat!'
+                            connection.send(message.encode(unicode))
+
                 # other connections refer to server heartbeats
                 else:
                     print(f'{address[0]} disconnected')
@@ -39,9 +47,12 @@ def clients_handler(connection, address):
                 connection.close()
                 break
 
-            for connection in app_init.client_list:
-                connection.send(f'{address} said: {data.decode(unicode)}'.encode(unicode))
-            print(f'Message from {address} ==> {data.decode(unicode)}')
+            else:
+                print(f'Message from {address[0]} ==> {data.decode(unicode)}')
+                for connection in app_init.connections:
+                    if connection in app_init.client_list:
+                        message = f'{address[0]} said: {data.decode(unicode)}'
+                        connection.send(message.encode(unicode))
 
         except KeyboardInterrupt:
             print(f'No Connection')
@@ -60,6 +71,7 @@ def start_server_binding():
             connection, address = sock.accept()
             app_init.connections.append(connection)
             print(f'{address[0]} connected')
+            print(f'Connection {connection}')
             new_thread(clients_handler, (connection, address))
         except KeyboardInterrupt:
             sock.close()
@@ -93,10 +105,11 @@ if __name__ == '__main__':
                 app_init.server_replica_crashed = ''
 
             if app_init.server_leader == app_init.myIP:
-                print(f'\n[SERVER] Running ==> {app_init.server_running}')
-                print(f'[SERVER] List: {app_init.server_list} ==> Leader: {app_init.server_leader}')
-                print(f'[SERVER] Neighbour ==> {app_init.server_neighbour}')
-                print(f'[SERVER] Network Changed ==> {app_init.network_changed}')
+                print(f'\n[SERVER] {app_init.myIP} Running ==> {app_init.server_running} '
+                      f'\n[SERVER] Server List: {app_init.server_list} ==> Leader: {app_init.server_leader}'
+                      f'\n[SERVER] Server Neighbour ==> {app_init.server_neighbour}'
+                      f'\n[SERVER] Client List: {app_init.client_list}'
+                      f'\n[SERVER] Network Changed ==> {app_init.network_changed}')
 
             app_init.network_changed = False
             sleep(3)

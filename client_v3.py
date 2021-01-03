@@ -70,8 +70,8 @@ def send_message():
 
 if __name__ == "__main__":
 
-    client_membername = input("Hello, you're trying to join the chat room. You can leave the chat again by entering {quit}."
-                              "\nPlease enter your name for joining: ")
+    print("Hello, you're trying to join the chat room. You can leave the chat again by entering {quit}.")
+    client_membername = input("Please enter your name for joining: ")
 
     # Send join message to multicast address and receive server leader address
     send_multicast.send_join_chat_message_to_multicast(client_membername)

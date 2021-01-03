@@ -26,6 +26,9 @@ server_running = False
 heartbeat_running = False
 network_changed = False
 
+# Genereal Client Status
+client_left = False
+
 # Lists
 client_list = []
 server_list = []
