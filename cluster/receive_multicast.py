@@ -20,9 +20,6 @@ def starting_multicast_receiver():
     group = socket.inet_aton(multicast_ip)
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-
-    # Set the socket to broadcast and enable reusing addresses
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     # Bind to the Server address
