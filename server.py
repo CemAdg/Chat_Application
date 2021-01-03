@@ -87,7 +87,7 @@ def new_thread(target, args):
 
 if __name__ == '__main__':
 
-    multicast_receiver = send_multicast.sending_request_to_multicast(app_init.server_list, app_init.server_leader, app_init.server_leader_crashed, app_init.server_replica_crashed)
+    multicast_receiver = send_multicast.sending_request_to_multicast(app_init.server_list, app_init.server_leader, app_init.server_leader_crashed, app_init.server_replica_crashed, app_init.client_list)
 
     if not multicast_receiver:
         app_init.server_list.append(app_init.myIP)
