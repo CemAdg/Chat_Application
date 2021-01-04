@@ -1,38 +1,39 @@
 import socket
 
 # Create a UDP socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Server application IP address and port
-server_address = 'hasanoglu.ddnss.de'
+server_address = '19.10.19.20'
 server_port = 10001
 
 # Buffer size
 buffer_size = 1024
 
 # Message sent to tmp_server
-message = 'Hi tmp_server!'
-value = input("Please enter a string:\n")
-message = f'{message}\n{value}'
+value = "Please enter a string"
+message = f'\n{value}'
 #print(f'You entered {message}')  format alternative
+client_socket.connect((server_address, server_port))
+
 
 while True:
 
-    # Send data to tmp_server
-    client_socket.sendto(message.encode(), (server_address, server_port))
-    print('Sent to tmp_server: ', message)
+    try:
+        # Send data to tmp_server
+        client_socket.send(message.encode('utf-8'))
 
-    # Receive response from tmp_server
-    print('Waiting for response...')
-    data, server = client_socket.recvfrom(buffer_size)
-    print('Received message from tmp_server: ', data.decode())
+        # Receive response from tmp_server
+        print('Waiting for response...')
+        data = client_socket.recv(buffer_size)
+        print('Received message from tmp_server: ', data.decode('utf-8'))
 
-    if data.decode() == 'Geh raus':
-        break
+        """if data.decode() == 'Geh raus':
+            break"""
 
-    value = input("Please enter a string:\n")
-    message = value
+        value = input("Please enter a string:\n")
+        message = value
 
-#finally:
-#    client_socket.close()
-#    print('Socket closed')
+    except KeyboardInterrupt:
+        client_socket.close()
+        print('Socket closed')

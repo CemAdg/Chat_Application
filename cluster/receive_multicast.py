@@ -2,6 +2,7 @@ import socket
 import struct
 import sys
 import pickle
+import server
 
 from cluster import hosts, ports
 
@@ -29,7 +30,6 @@ def starting_multicast_receiver():
     while True:
         try:
             data, address = sock.recvfrom(buffer_size)
-
             print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Received data from {address[0]}',
                   file=sys.stderr)
 
@@ -40,10 +40,9 @@ def starting_multicast_receiver():
                 hosts.leader = pickle.loads(data)[1]
                 print(f'[MULTICAST RECEIVER {hosts.myIP}] All Data have been updated',
                       file=sys.stderr)
-
+                server.printer()
             sock.sendto('ack'.encode(unicode), address)
             hosts.network_changed = True
         except KeyboardInterrupt:
             print(f'[MULTICAST RECEIVER {hosts.myIP}] Closing UDP Socket',
                   file=sys.stderr)
-            break
