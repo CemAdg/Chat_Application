@@ -3,29 +3,29 @@ import struct
 import sys
 import pickle
 
-from cluster import app_init
+from cluster import hosts, ports
 
 
-multicast_ip = app_init.multicast_ipaddress
-server_address = ('', app_init.multicast_port)
+multicast_ip = hosts.multicast
+server_address = ('', ports.multicast)
+client_address = ('', ports.multicast_client)
+
+
 buffer_size = 1024
 unicode = 'utf-8'
 
 # Create the socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+sock_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def starting_multicast_receiver():
+    # Bind to the Server address
+    sock.bind(server_address)
     # Tell the operating system to add the socket to the multicast group on all interfaces
     group = socket.inet_aton(multicast_ip)
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-    # Bind to the Server address
-    sock.bind(server_address)
-
-    print(f'\n[MULTICAST RECEIVER {app_init.myIP}] Starting UDP Socket and listening on Port {app_init.multicast_port}',
+    print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Starting UDP Socket and listening on Port {ports.multicast}',
           file=sys.stderr)
 
     # Receive/respond loop
@@ -33,37 +33,56 @@ def starting_multicast_receiver():
         try:
             data, address = sock.recvfrom(buffer_size)
 
-            print(f'\n[MULTICAST RECEIVER {app_init.myIP}] Received data from {address[0]}',
+            print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Received data from {address[0]}',
                   file=sys.stderr)
 
-            # if multicast group receives a join message from a chat client, then the server leader executes the following:
-            if app_init.server_leader == app_init.myIP and pickle.loads(data)[0] == "JOIN":
-                print(f'[MULTICAST RECEIVER {app_init.myIP}] Client {pickle.loads(data)[1]} - {address} wants to join the chat',
+            if len(pickle.loads(data)[0]) == 0:
+                hosts.server_list.append(address[0]) if address[0] not in hosts.server_list else hosts.server_list
+            elif pickle.loads(data)[1] and hosts.leader != hosts.myIP or pickle.loads(data)[3]:
+                hosts.server_list = pickle.loads(data)[0]
+                hosts.leader = pickle.loads(data)[1]
+                print(f'[MULTICAST RECEIVER {hosts.myIP}] All Data have been updated',
                       file=sys.stderr)
+
+            sock.sendto('ack'.encode(unicode), address)
+            hosts.network_changed = True
+        except KeyboardInterrupt:
+            print(f'[MULTICAST RECEIVER {hosts.myIP}] Closing UDP Socket',
+                  file=sys.stderr)
+            break
+
+def starting_client_multicast_receiver():
+    # Bind to the Client address
+    sock_client.bind(client_address)
+    # Tell the operating system to add the socket to the multicast group on all interfaces
+    group = socket.inet_aton(multicast_ip)
+    mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+    sock_client.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Starting UDP Socket for chat joining requests and listening on Port {ports.multicast_client}',
+          file=sys.stderr)
+
+    # Receive/respond loop
+    while True:
+        try:
+            data, address = sock.recvfrom(buffer_size)
+
+            print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Received data from {address[0]}',
+                  file=sys.stderr)
+
+            if hosts.server_leader == hosts.myIP and pickle.loads(data)[0] == "JOIN":
+                print(
+                    f'[MULTICAST RECEIVER {hosts.myIP}] Client {pickle.loads(data)[1]} - {address} wants to join the chat',
+                    file=sys.stderr)
                 # add chat client in client_list (including address and client name)
-                app_init.client_list.append(address[0])
+                hosts.client_list.append(address[0])
                 # answer chat client with the current client list and the server leader
-                message = pickle.dumps([app_init.client_list, app_init.server_leader])
+                message = pickle.dumps([hosts.client_list, hosts.server_leader])
                 sock.sendto(message, address)
 
                 # set network_changed to true, so every server replica gets the updated client list
-                app_init.network_changed = True
-
-            # messages between server
-            elif len(pickle.loads(data)[0]) == 0:
-                app_init.server_list.append(address[0]) if address[0] not in app_init.server_list else app_init.server_list
-                sock.sendto('ack'.encode(unicode), address)
-                app_init.network_changed = True
-
-            elif pickle.loads(data)[1] and app_init.server_leader != app_init.myIP or pickle.loads(data)[3]:
-                app_init.server_list = pickle.loads(data)[0]
-                app_init.server_leader = pickle.loads(data)[1]
-                print(f'[MULTICAST RECEIVER {app_init.myIP}] All Data have been updated',
-                      file=sys.stderr)
-                sock.sendto('ack'.encode(unicode), address)
-                app_init.network_changed = True
+                hosts.network_changed = True
 
         except KeyboardInterrupt:
-            print(f'[MULTICAST RECEIVER {app_init.myIP}] Closing UDP Socket',
+            print(f'[MULTICAST RECEIVER {hosts.myIP}] Closing UDP Socket',
                   file=sys.stderr)
             break

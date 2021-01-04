@@ -2,7 +2,7 @@
 
 import socket
 
-from cluster import app_init
+from cluster import hosts
 
 
 def form_ring(members):
@@ -33,4 +33,4 @@ def get_neighbour(members, current_member_ip, direction='left'):
 def start_leader_election(server_list, leader_server):
     ring = form_ring(server_list)
     neighbour = get_neighbour(ring, leader_server, 'right')
-    return neighbour if neighbour != app_init.myIP else None
+    return neighbour if neighbour != hosts.myIP else None

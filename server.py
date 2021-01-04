@@ -3,81 +3,20 @@
 import socket
 import sys
 import threading
-import pickle
 
 from time import sleep
 
-from cluster import app_init, receive_multicast, send_multicast, leader_election, heartbeat
+from cluster import hosts, ports, receive_multicast, send_multicast, leader_election, heartbeat
+from cluster.person import Person
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-host_address = (app_init.myIP, app_init.server_port)
+host_address = (hosts.myIP, ports.server)
 buffer_size = 1024
 unicode = 'utf-8'
 
 server_exist = False
-
-
-def clients_handler(connection, address):
-    while True:
-        try:
-            data = connection.recv(buffer_size)
-            #check if no data received from a connection or a chat member sent a {quit}
-            if not data or data[0] == '{quit}':
-                sleep(0.5)
-
-                # if the disconnected address is given in the client_list, a chat member left the chat
-                if address[0] in app_init.client_list:
-                    print(f'Chat member {address[0]} disconnected')
-                    app_init.client_list.remove(address[0])
-                    app_init.client_left = True
-                    app_init.network_changed = True
-
-                    for connection in app_init.connections:
-                        if connection in app_init.client_list:
-                            message = f'{address[0]} left the chat!'
-                            connection.send(message.encode(unicode))
-
-                # other connections refer to server heartbeats
-                else:
-                    print(f'{address[0]} disconnected')
-
-                app_init.connections.remove(connection)
-                connection.close()
-                break
-
-            else:
-                print(f'Message from {address[0]} ==> {data.decode(unicode)}')
-                for connection in app_init.connections:
-                    if connection in app_init.client_list:
-                        message = f'{address[0]} said: {data.decode(unicode)}'
-                        connection.send(message.encode(unicode))
-
-        except KeyboardInterrupt:
-            print(f'No Connection')
-
-
-def start_server_binding():
-
-    sock.bind(host_address)
-    sock.listen()
-    print(f'\n[SERVER] Starting and listening on IP {app_init.myIP} with PORT {app_init.server_port}',
-          file=sys.stderr)
-    app_init.server_running = True
-
-    while True:
-        try:
-            connection, address = sock.accept()
-            app_init.connections.append(connection)
-            print(f'{address[0]} connected')
-            print(f'Connection {connection}')
-            new_thread(clients_handler, (connection, address))
-        except KeyboardInterrupt:
-            sock.close()
-            print("\nSocket closed")
-            break
-
 
 def new_thread(target, args):
     t = threading.Thread(target=target, args=args)
@@ -85,40 +24,133 @@ def new_thread(target, args):
     t.start()
 
 
-if __name__ == '__main__':
+def broadcast(msg, name):
+    """
+    send new messages to all clients
+    :param msg: bytes["utf8"]
+    :param name: str
+    :return:
+    """
+    for person in hosts.persons:
+        client = person.client
+        try:
+            client.send(bytes(name, "utf8") + msg)
+        except Exception as e:
+            print("[EXCEPTION]", e)
 
-    multicast_receiver = send_multicast.sending_request_to_multicast(app_init.server_list, app_init.server_leader, app_init.server_leader_crashed, app_init.server_replica_crashed, app_init.client_list)
 
-    if not multicast_receiver:
-        app_init.server_list.append(app_init.myIP)
-        app_init.server_leader = app_init.myIP
+def client_communication(person):
+    """
+    Thread to handle all messages from client
+    :param person: Person
+    :return: None
+    """
+    client = person.client
 
-    new_thread(receive_multicast.starting_multicast_receiver, ())
+    # first message received is always the persons name
+    name = client.recv(buffer_size).decode("utf8")
+    person.set_name(name)
+
+    msg = bytes(f"{name} has joined the chat!", "utf8")
+    broadcast(msg, "")  # broadcast welcome message
+
+    while True:  # wait for any messages from person
+        try:
+            msg = client.recv(buffer_size)
+
+            if msg == bytes("{quit}", "utf8"):  # if message is quit disconnect client
+                client.close()
+                hosts.persons.remove(person)
+                broadcast(bytes(f"{name} has left the chat...", "utf8"), "")
+                print(f"[DISCONNECTED] {name} disconnected")
+                break
+            else:  # otherwise send message to all other clients
+
+                #vector clocks
+
+                broadcast(msg, name+": ")
+                print(f"{name}: ", msg.decode("utf8"))
+
+        except Exception as e:
+            print("[EXCEPTION]", e)
+            break
+
+def client_handler(connection, address):
+    while True:
+        try:
+            data = connection.recv(buffer_size)
+            if not data:
+                sleep(0.5)
+                print(f'{address[0]} disconnected')
+                hosts.connections.remove(connection)
+                connection.close()
+                break
+            for connection in hosts.connections:
+                connection.send(f'{address[0]} said: {data.decode(unicode)}'.encode(unicode))
+            print(f'Message from {address[0]} ==> {data.decode(unicode)}')
+        except KeyboardInterrupt:
+            print(f'No Connection')
+
+
+def start_binding():
+
+    sock.bind(host_address)
+    sock.listen()
+    print(f'\n[SERVER] Starting and listening on IP {hosts.myIP} with PORT {ports.server}',
+          file=sys.stderr)
+    hosts.server_running = True
 
     while True:
         try:
-            # if a server replica crashes or the network was changed (client list as well as server list),
-            # then the updated lists will be sent to all server who listen on the the multicast group
-            if app_init.server_leader == app_init.myIP and app_init.network_changed or app_init.server_replica_crashed:
-                sleep(2)
-                send_multicast.sending_request_to_multicast(app_init.server_list, app_init.server_leader, app_init.server_leader_crashed, app_init.server_replica_crashed, app_init.client_list)
-                app_init.server_replica_crashed = ''
+            connection, address = sock.accept()
+            person = Person(address, connection)
+            hosts.persons.append(Person)
 
-            if app_init.server_leader == app_init.myIP:
-                print(f'\n[SERVER] {app_init.myIP} Running ==> {app_init.server_running} '
-                      f'\n[SERVER] Server List: {app_init.server_list} ==> Leader: {app_init.server_leader}'
-                      f'\n[SERVER] Server Neighbour ==> {app_init.server_neighbour}'
-                      f'\n[SERVER] Client List: {app_init.client_list}'
-                      f'\n[SERVER] Network Changed ==> {app_init.network_changed}')
+            hosts.connections.append(connection)
+            print(f'{address[0]} connected')
+            new_thread(client_handler, (connection, address))
 
-            app_init.network_changed = False
-            sleep(3)
-            new_thread(start_server_binding, ()) if not app_init.server_running else None
-            new_thread(heartbeat.start_heartbeat, ()) if not app_init.heartbeat_running and app_init.server_running else None
+            new_thread(client_communication, person)
 
         except KeyboardInterrupt:
             sock.close()
-            print(f'\nClosing Server on IP {app_init.myIP} with PORT {app_init.server_port}', file=sys.stderr)
+            print("\nSocket closed")
+            break
+
+
+
+if __name__ == '__main__':
+
+    multicast_receiver = send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed)
+
+    if not multicast_receiver:
+        hosts.server_list.append(hosts.myIP)
+        hosts.leader = hosts.myIP
+
+    new_thread(receive_multicast.starting_multicast_receiver, ())
+    new_thread(receive_multicast.starting_client_multicast_receiver, ())
+
+    while True:
+        try:
+            if hosts.leader == hosts.myIP and hosts.network_changed or hosts.replica_crashed:
+                sleep(2)
+                send_multicast.sending_request_to_multicast(hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed)
+                hosts.replica_crashed = ''
+
+            if hosts.leader == hosts.myIP:
+                print(f'\n[SERVER] Running ==> {hosts.server_running}')
+                print(f'[SERVER] List: {hosts.server_list} ==> Leader: {hosts.leader}')
+                print(f'[SERVER] Neighbour ==> {hosts.neighbour}')
+                print(f'[SERVER] Network Changed ==> {hosts.network_changed}')
+
+            hosts.network_changed = False
+            sleep(3)
+            new_thread(start_binding, ()) if not hosts.server_running else None
+            new_thread(heartbeat.start_heartbeat, ()) if not hosts.heartbeat_running and hosts.server_running else None
+
+        except KeyboardInterrupt:
+            sock.close()
+            print(f'\nClosing Server on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
             break
 
 

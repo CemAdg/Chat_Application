@@ -1,16 +1,30 @@
-from socket import AF_INET, socket, SOCK_STREAM
-from threading import Thread, Lock
-import time
+# this is a client
 
+import socket
+import sys
+import threading
+import pickle
+from socket import AF_INET, socket, SOCK_STREAM
+import time
+from time import sleep
+
+from cluster import receive_multicast, send_multicast, leader_election, heartbeat, hosts, ports
+
+#localhost_address = ("localhost", 5500)
+#buffer_size = 1024
+#unicode = 'utf-8'
+
+join_status = ''
+
+HOST = ""
+PORT = ""
+ADDR = (HOST, PORT)
+BUFSIZ = 1024
 
 class Client:
     """
     for communication with server
     """
-    HOST = "localhost"
-    PORT = 5500
-    ADDR = (HOST, PORT)
-    BUFSIZ = 1024
 
     def __init__(self, name):
         """
@@ -18,11 +32,10 @@ class Client:
         :param name: str
         """
         self.client_socket = socket(AF_INET, SOCK_STREAM)
-        self.client_socket.connect(self.ADDR)
+        self.client_socket.connect(ADDR)
         self.messages = []
-        receive_thread = Thread(target=self.receive_messages)
+        receive_thread = threading.Thread(target=self.receive_messages)
         receive_thread.start()
-        self.send_message(name)
 
     def receive_messages(self):
         """
@@ -45,6 +58,7 @@ class Client:
         :param msg: str
         :return: None
         """
+
         try:
             self.client_socket.send(bytes(msg, "utf8"))
             if msg == "{quit}":
@@ -115,11 +129,26 @@ def UI_send_messages():
 
 
 if __name__ == "__main__":
-    name = input("You're trying to join the chat room. Please first enter your name: ")
-    c = Client(name)
 
-    Thread(target=UI_show_messages).start()
-    Thread(target=UI_send_messages).start()
+
+    print("Hello, you're trying to join the chat room. You can leave the chat again by entering {quit}.")
+    name = input("Please enter your name for joining: ")
+
+
+    # Send join message to multicast address and receive server leader address
+    send_multicast.send_join_chat_message_to_multicast(name)
+
+    HOST = hosts.server_leader
+    PORT = ports.server
+    ADDR = (HOST, PORT)
+
+    c = Client(name)
+    join_status = True
+
+    c.send_message(name)
+
+    threading.Thread(target=UI_show_messages).start()
+    threading.Thread(target=UI_send_messages).start()
 
 
 
@@ -127,3 +156,4 @@ if __name__ == "__main__":
 # Connect to server leader address
 # listen multicast for server leader crash messages: receive new server leader address
 # Disconnect crashed server and connect to new leader
+

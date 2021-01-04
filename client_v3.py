@@ -6,7 +6,7 @@ import threading
 
 from time import sleep
 
-from cluster import app_init, receive_multicast, send_multicast, leader_election, heartbeat
+from cluster import hosts, receive_multicast, send_multicast, leader_election, heartbeat
 
 localhost_address = ("localhost", 5500)
 buffer_size = 1024
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     send_multicast.send_join_chat_message_to_multicast(client_membername)
 
     # Connect to server leader
-    host_address = (app_init.server_leader, app_init.server_port)
+    host_address = (hosts.server_leader, hosts.server_port)
     client_socket.connect(host_address)
     join_status = True
 
