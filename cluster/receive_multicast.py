@@ -36,7 +36,21 @@ def starting_multicast_receiver():
             print(f'\n[MULTICAST RECEIVER {app_init.myIP}] Received data from {address[0]}',
                   file=sys.stderr)
 
-            if len(pickle.loads(data)[0]) == 0:
+            # if multicast group receives a join message from a chat client, then the server leader executes the following:
+            if app_init.server_leader == app_init.myIP and pickle.loads(data)[0] == "JOIN":
+                print(f'[MULTICAST RECEIVER {app_init.myIP}] Client {pickle.loads(data)[1]} - {address} wants to join the chat',
+                      file=sys.stderr)
+                # add chat client in client_list (including address and client name)
+                app_init.client_list.append(address[0])
+                # answer chat client with the current client list and the server leader
+                message = pickle.dumps([app_init.client_list, app_init.server_leader])
+                sock.sendto(message, address)
+
+                # set network_changed to true, so every server replica gets the updated client list
+                app_init.network_changed = True
+
+            # messages between server
+            elif len(pickle.loads(data)[0]) == 0:
                 app_init.server_list.append(address[0]) if address[0] not in app_init.server_list else app_init.server_list
                 sock.sendto('ack'.encode(unicode), address)
                 app_init.network_changed = True
@@ -48,21 +62,6 @@ def starting_multicast_receiver():
                       file=sys.stderr)
                 sock.sendto('ack'.encode(unicode), address)
                 app_init.network_changed = True
-
-            # if multicast group receives a join message from a chat client, then the server leader executes the following:
-            elif app_init.server_leader == app_init.myIP and data.decode() == "JOIN":
-                print(f'[MULTICAST RECEIVER {app_init.myIP}] Client {address} wants to join the chat',
-                      file=sys.stderr)
-                # add chat client in client_list (including address and client name)
-                app_init.client_list.append(address)
-                # answer chat client with the current client list and the server leader
-                message = pickle.dumps([app_init.client_list, app_init.server_leader])
-                sock.sendto(message, address)
-
-                #set network_changed to true, so every server replica gets the updated client list
-                app_init.network_changed = True
-
-
 
         except KeyboardInterrupt:
             print(f'[MULTICAST RECEIVER {app_init.myIP}] Closing UDP Socket',

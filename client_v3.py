@@ -28,9 +28,9 @@ def receive_messages():
 
     while True:
         try:
-            msg = client_socket.recv(buffer_size).decode()
+            msg = client_socket.recv(buffer_size)
             # received messages from the server will be cached in .messages object
-            messages.append(msg)
+            messages.append(msg.decode())
 
             for msg in messages:
                 print(msg)
@@ -56,7 +56,7 @@ def send_message():
         msg = (input(), client_membername)
 
         try:
-            client_socket.send(bytes(msg, unicode))
+            client_socket.send(bytes(msg.encode(), unicode))
             if msg[0] == "{quit}":
                 client_socket.close()
                 print("You left the chat!")
@@ -81,8 +81,8 @@ if __name__ == "__main__":
     client_socket.connect(host_address)
     join_status = True
 
-    Thread(target=send_message).start()
-    Thread(target=receive_messages).start()
+    threading.Thread(target=send_message).start()
+    threading.Thread(target=receive_messages).start()
 
 
 

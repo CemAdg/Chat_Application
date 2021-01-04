@@ -30,7 +30,7 @@ def clients_handler(connection, address):
                 # if the disconnected address is given in the client_list, a chat member left the chat
                 if address[0] in app_init.client_list:
                     print(f'Chat member {address[0]} disconnected')
-                    app_init.client_list.remove(address)
+                    app_init.client_list.remove(address[0])
                     app_init.client_left = True
                     app_init.network_changed = True
 
