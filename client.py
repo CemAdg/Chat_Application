@@ -19,17 +19,6 @@ def send_message():
         try:
             sock.send(message.encode(unicode))
 
-            """
-            if not data:
-                print("\nChat server currently not available. Please wait for reconnection with new server leader")
-                sock.close()
-                sleep(5)
-                send_multicast.sending_join_chat_request_to_multicast()
-                # assign new leader address
-                leader_address = (hosts.leader, ports.server)
-                sock.connect(leader_address)
-                #break
-            """
         except OSError as e:
             print(e)
             #sock.close()
@@ -51,28 +40,10 @@ def receive_message():
             print(data.decode(unicode))
 
             if not data:
-                print("\nChat server currently not available. Please wait for reconnection with new server leader")
+                print("\nChat server currently not available. Please wait 10 seconds for reconnection with new server leader.")
                 sock.close()
                 #sock.shutdown(socket.SHUT_RDWR)
 
-
-                """
-                #sock.shutdown()
-
-                # start socket again
-                #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-                # get new server leader
-                sleep(8)
-                send_multicast.sending_join_chat_request_to_multicast()
-
-                # assign and connect to new leader address
-                sleep(2)
-                leader_address = (hosts.leader, ports.server)
-
-                sock.connect(leader_address)
-                #break
-                """
                 sleep(10)
                 # Reconnect to new server leader
                 connect()
