@@ -61,7 +61,7 @@ def start_binding():
     while True:
         try:
             client, address = sock.accept()
-            if address[0] not in hosts.server_list:
+            if address[0] not in hosts.server_list or address[0] == hosts.myIP:
                 print(f'{address[0]} connected')
                 print(client)
                 hosts.client_list.append(client)

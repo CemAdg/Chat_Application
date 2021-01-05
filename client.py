@@ -7,9 +7,13 @@ from cluster import hosts, ports, receive_multicast, send_multicast, leader_elec
 buffer_size = 1024
 unicode = 'utf-8'
 
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 def send_message():
+    global sock
+
     while True:
+
         try:
             sock.send(input("").encode(unicode))
 
@@ -24,13 +28,19 @@ def send_message():
                 sock.connect(leader_address)
                 #break
             """
+        except OSError as e:
+            print(e)
+            #sock.close()
+            #sock.shutdown(socket.SHUT_RDWR)
+
         except KeyboardInterrupt:
-            sock.close()
+            #sock.close()
             print("\nClient closed")
             break
 
 
 def receive_message():
+    global sock
     hosts.client_running = True
     while True:
         try:
@@ -40,6 +50,9 @@ def receive_message():
             if not data:
                 print("\nChat server currently not available. Please wait for reconnection with new server leader")
                 sock.close()
+                #sock.shutdown(socket.SHUT_RDWR)
+
+
                 """
                 #sock.shutdown()
 
@@ -63,7 +76,7 @@ def receive_message():
 
 
         except KeyboardInterrupt:
-            sock.close()
+            #sock.close()
             print("\nClient closed")
             break
 
@@ -96,12 +109,12 @@ if __name__ == '__main__':
 
     name = input("Please enter your name:")
 
-    # Set up socket and start connection
     connect()
 
     while True:
         new_thread(send_message, (), False) if not hosts.client_running else None
         new_thread(receive_message, (), False) if not hosts.client_running else None
+
 
 """
     while True:
