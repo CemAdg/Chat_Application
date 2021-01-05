@@ -13,9 +13,11 @@ def send_message():
     global sock
 
     while True:
+        message = input("")
+        #sock = getGlobalSock()
 
         try:
-            sock.send(input("").encode(unicode))
+            sock.send(message.encode(unicode))
 
             """
             if not data:
@@ -43,6 +45,7 @@ def receive_message():
     global sock
     hosts.client_running = True
     while True:
+
         try:
             data = sock.recv(buffer_size)
             print(data.decode(unicode))
@@ -73,6 +76,8 @@ def receive_message():
                 sleep(10)
                 # Reconnect to new server leader
                 connect()
+                sleep(2)
+                sock.send(("vallah nein").encode(unicode))
 
 
         except KeyboardInterrupt:
@@ -80,10 +85,16 @@ def receive_message():
             print("\nClient closed")
             break
 
+def getGlobalSock():
+    print("Get new sock")
+    global sock
+    return sock
 
 def connect():
     global sock
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    print(sock)
 
     # send join request to multicast for receiving server leader address
     send_multicast.sending_join_chat_request_to_multicast()
