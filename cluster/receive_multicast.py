@@ -33,16 +33,30 @@ def starting_multicast_receiver():
             print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Received data from {address[0]}',
                   file=sys.stderr)
 
+            # if multicast group receives a join message from a chat client, then the server leader executes the following:
+            if hosts.leader == hosts.myIP and pickle.loads(data)[0] == 'JOIN':
+                print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Client {address[0]} wants to join the chat room',
+                      file=sys.stderr)
+                # answer chat client with the current server leader
+                message = pickle.dumps([hosts.leader, ''])
+                sock.sendto(message, address)
+
+            # messages between all server if leader crashes, server list or client list changes
             if len(pickle.loads(data)[0]) == 0:
                 hosts.server_list.append(address[0]) if address[0] not in hosts.server_list else hosts.server_list
+                sock.sendto('ack'.encode(unicode), address)
+                hosts.network_changed = True
+
             elif pickle.loads(data)[1] and hosts.leader != hosts.myIP or pickle.loads(data)[3]:
                 hosts.server_list = pickle.loads(data)[0]
                 hosts.leader = pickle.loads(data)[1]
+                hosts.client_list = pickle.loads(data)[4]
                 print(f'[MULTICAST RECEIVER {hosts.myIP}] All Data have been updated',
                       file=sys.stderr)
                 server.printer()
-            sock.sendto('ack'.encode(unicode), address)
-            hosts.network_changed = True
+                sock.sendto('ack'.encode(unicode), address)
+                hosts.network_changed = True
+
         except KeyboardInterrupt:
             print(f'[MULTICAST RECEIVER {hosts.myIP}] Closing UDP Socket',
                   file=sys.stderr)

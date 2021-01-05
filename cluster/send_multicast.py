@@ -23,10 +23,11 @@ sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
 def sending_request_to_multicast():
     sleep(1)
-    # Send data to the Multicast address
+
+    # Send data to the Multicast address - server communication
     print(f'\n[MULTICAST SENDER {hosts.myIP}] Sending data to Multicast Receivers {multicast_address}',
           file=sys.stderr)
-    message = pickle.dumps([hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed])
+    message = pickle.dumps([hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed, str(hosts.client_list)])
     sock.sendto(message, multicast_address)
     try:
         data, address = sock.recvfrom(buffer_size)
@@ -39,3 +40,18 @@ def sending_request_to_multicast():
         print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver not detected',
               file=sys.stderr)
         return False
+
+def sending_join_chat_request_to_multicast():
+
+    # function started from client
+    print(f'\n[MULTICAST SENDER {hosts.myIP}] Sending join chat request to Multicast Address {multicast_address}',
+          file=sys.stderr)
+    message = pickle.dumps(['JOIN', '', '', ''])
+    sock.sendto(message, multicast_address)
+    try:
+        data, address = sock.recvfrom(buffer_size)
+        hosts.leader = pickle.loads(data)[0]
+
+    except socket.timeout:
+        print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver not detected -> Chat Server offline',
+              file=sys.stderr)

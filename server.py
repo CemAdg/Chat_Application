@@ -35,7 +35,12 @@ def client_handler(client, address):
                 sleep(0.5)
                 print(f'{address[0]} disconnected')
                 hosts.client_list.remove(client)
+                #hosts.client_list.remove(client.getpeername())
                 client.close()
+
+                # send updated list to all replica
+                #new_thread(send_multicast.sending_request_to_multicast, (), True)
+
                 new_thread(printer, (), True)
                 break
             for client in hosts.client_list:
@@ -58,7 +63,15 @@ def start_binding():
             client, address = sock.accept()
             if address[0] not in hosts.server_list:
                 print(f'{address[0]} connected')
+                print(client)
                 hosts.client_list.append(client)
+
+                #hosts.client_list.append(client.getpeername())
+
+                # send updated list to all replica
+                #new_thread(send_multicast.sending_request_to_multicast, (), True)
+
+                # start communication between chat clients
                 new_thread(client_handler, (client, address), False)
                 new_thread(printer, (), True)
         except KeyboardInterrupt:
@@ -87,6 +100,8 @@ if __name__ == '__main__':
     while True:
         try:
             if hosts.leader == hosts.myIP and hosts.network_changed or hosts.replica_crashed:
+                if hosts.leader_crashed == True:
+                    hosts.client_list = []
                 new_thread(send_multicast.sending_request_to_multicast, (), True)
                 hosts.leader_crashed = False
                 hosts.replica_crashed = ''
