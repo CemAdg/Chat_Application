@@ -8,7 +8,6 @@ from cluster import hosts, ports, leader_election
 
 
 def start_heartbeat():
-    hosts.heartbeat_running = True
     while True:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

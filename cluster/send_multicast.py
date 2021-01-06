@@ -41,6 +41,7 @@ def sending_request_to_multicast():
               file=sys.stderr)
         return False
 
+
 def sending_join_chat_request_to_multicast():
 
     # function started from client
