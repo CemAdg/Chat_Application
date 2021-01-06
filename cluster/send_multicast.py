@@ -14,7 +14,7 @@ unicode = 'utf-8'
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # Set the timeout so the socket does not block indefinitely when trying to receiver data
-sock.settimeout(0.5)
+sock.settimeout(1)
 
 # Set the time-to-live for messages to 1 so they do not go past the local network segment
 ttl = struct.pack('b', 1)
@@ -27,11 +27,12 @@ def sending_request_to_multicast():
     # Send data to the Multicast address - server communication
     print(f'\n[MULTICAST SENDER {hosts.myIP}] Sending data to Multicast Receivers {multicast_address}',
           file=sys.stderr)
-    message = pickle.dumps([hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed, str(hosts.client_list)])
+    message = pickle.dumps([hosts.server_list, hosts.leader, hosts.leader_crashed, hosts.replica_crashed,
+                            str(hosts.client_list)])
     sock.sendto(message, multicast_address)
     try:
-        data, address = sock.recvfrom(buffer_size)
-        server.new_thread(server.printer, (), True)
+        sock.recvfrom(buffer_size)
+
         if hosts.leader == hosts.myIP:
             print(f'[MULTICAST SENDER {hosts.myIP}] All Servers have been updated',
                   file=sys.stderr)
