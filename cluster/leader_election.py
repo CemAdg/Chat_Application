@@ -2,15 +2,14 @@
 
 import socket
 
-server_list = ['0.0.0.1', '0.0.0.2', '0.0.0.3', '0.0.0.4']
-leader_server = '0.0.0.3'
+from cluster import hosts
 
 
 def form_ring(members):
     sorted_binary_ring = sorted([socket.inet_aton(member) for member in members])
     # print(sorted_binary_ring)
     sorted_ip_ring = [socket.inet_ntoa(node) for node in sorted_binary_ring]
-    print(sorted_ip_ring)
+    # print(sorted_ip_ring)
     return sorted_ip_ring
 
 
@@ -34,7 +33,4 @@ def get_neighbour(members, current_member_ip, direction='left'):
 def start_leader_election(server_list, leader_server):
     ring = form_ring(server_list)
     neighbour = get_neighbour(ring, leader_server, 'right')
-    print(neighbour)
-
-
-start_leader_election(server_list, leader_server)
+    return neighbour if neighbour != hosts.myIP else None
