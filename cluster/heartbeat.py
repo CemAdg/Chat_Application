@@ -22,7 +22,7 @@ def start_heartbeat():
                 sock.connect(host_address)
                 print(f'[HEARTBEAT] Neighbour {hosts.neighbour} response',
                       file=sys.stderr)
-            except ConnectionError:
+            except:
                 hosts.server_list.remove(hosts.neighbour)
                 if hosts.leader == hosts.neighbour:
                     hosts.leader_crashed = True
