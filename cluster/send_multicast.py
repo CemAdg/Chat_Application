@@ -44,6 +44,7 @@ def sending_request_to_multicast():
             print(f'[MULTICAST SENDER {hosts.myIP}] All Servers have been updated',
                   file=sys.stderr)
         return True
+
     except socket.timeout:
         print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver not detected',
               file=sys.stderr)
@@ -62,6 +63,9 @@ def sending_join_chat_request_to_multicast():
     try:
         data, address = sock.recvfrom(hosts.buffer_size)
         hosts.leader = pickle.loads(data)[0]
+        return True
+
     except socket.timeout:
-        print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver not detected -> Chat Server offline',
+        print(f'[MULTICAST SENDER {hosts.myIP}] Multicast Receiver not detected -> Chat Server is offline.',
               file=sys.stderr)
+        return False

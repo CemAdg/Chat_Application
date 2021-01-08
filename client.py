@@ -1,14 +1,25 @@
+# this is a Client
+
+# import Modules
 import socket
 import threading
+import os
+
 from time import sleep
 from cluster import hosts, ports, send_multicast
 
-buffer_size = 1024
-unicode = 'utf-8'
-
+# creating TCP Socket for Client
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
+# standardized for creating and starting Threads
+def new_thread(target, args):
+    t = threading.Thread(target=target, args=args)
+    t.daemon = True
+    t.start()
+
+
+# function for sending messages to the Server
 def send_message():
     global sock
 
@@ -16,69 +27,79 @@ def send_message():
         message = input("")
 
         try:
-            sock.send(message.encode(unicode))
+            sock.send(message.encode(hosts.unicode))
 
         except Exception as e:
             print(e)
+            break
 
 
+# function for receiving messages from the Server
 def receive_message():
     global sock
 
     while True:
 
         try:
-            data = sock.recv(buffer_size)
-            print(data.decode(unicode))
+            data = sock.recv(hosts.buffer_size)
+            print(data.decode(hosts.unicode))
 
+            # if connection to server is lost (in case of server crash)
             if not data:
                 print("\nChat server currently not available."
                       "Please wait 3 seconds for reconnection with new server leader.")
                 sock.close()
-
                 sleep(3)
-                # Reconnect to new server leader
+
+                # Start reconnecting to new server leader
                 connect()
 
         except Exception as e:
             print(e)
+            break
 
 
+# function for creating Client socket and establishing connection to Server Leader
 def connect():
     global sock
 
+    # creating TCP Socket for Client
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    # send join request to multicast for receiving server leader address
-    send_multicast.sending_join_chat_request_to_multicast()
+    # send a join request to Multicast Address for receiving the current Server Leader address
+    # if there is no response from the Server Leader, value False will be returned
+    server_exist = send_multicast.sending_join_chat_request_to_multicast()
 
-    # assign server leader address
-    leader_address = (hosts.leader, ports.server)
+    if server_exist:
+        # assign Server Leader address
+        leader_address = (hosts.leader, ports.server)
+        print(f'This is the server leader: {leader_address}')
 
-    print(f'This is the server leader: {leader_address}')
+        # connect to Server Leader
+        sock.connect(leader_address)
+        print("You joined the Chat Room.\nYou can start chatting.")
 
-    # connect to server leader
-    sock.connect(leader_address)
-
-    print("You joined the chatroom.\nYou can start chatting.")
-
-
-def new_thread(target, args):
-    t = threading.Thread(target=target, args=args)
-    t.daemon = True
-    t.start()
+    # if there is no Server available, exit the script
+    elif not server_exist:
+        print("Please try to join later again.")
+        os._exit(0)
 
 
+# main Thread
 if __name__ == '__main__':
     try:
         print("You try to join the chat room.")
 
+        # Connect to Server Leader
         connect()
+
+        # Start Threads for sending and receiving messages from other chat participants
         new_thread(send_message, ())
         new_thread(receive_message, ())
 
         while True:
             pass
+
     except KeyboardInterrupt:
         print("\nYou left the chatroom")

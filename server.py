@@ -1,4 +1,4 @@
-# this is a server
+# this is a Server
 
 # import Modules
 import socket
@@ -8,7 +8,7 @@ import queue
 
 from cluster import hosts, ports, receive_multicast, send_multicast, heartbeat
 
-# Creating TCP Socket for Server
+# creating TCP Socket for Server
 # get the own IP from cluster.hosts
 # get the port used for Server from cluster.ports
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,15 +51,17 @@ def client_handler(client, address):
         try:
             data = client.recv(hosts.buffer_size)
 
-            # if client is disconnected or lost the connection
+            # if Client is disconnected or lost the connection
             if not data:
                 print(f'{address} disconnected')
                 FIFO.put(f'\n{address} disconnected\n')
                 hosts.client_list.remove(client)
                 client.close()
                 break
+
             FIFO.put(f'{address} said: {data.decode(hosts.unicode)}')
             print(f'Message from {address} ==> {data.decode(hosts.unicode)}')
+
         except Exception as e:
             print(e)
             break
@@ -82,6 +84,7 @@ def start_binding():
                 FIFO.put(f'\n{address} connected\n')
                 hosts.client_list.append(client)
                 new_thread(client_handler, (client, address))
+
         except Exception as e:
             print(e)
             break
@@ -123,6 +126,7 @@ if __name__ == '__main__':
 
             # function to send the FIFO Queue messages
             send_clients()
+
         except KeyboardInterrupt:
             sock.close()
             print(f'\nClosing Server on IP {hosts.myIP} with PORT {ports.server}', file=sys.stderr)
