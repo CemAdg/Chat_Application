@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # loop main Thread
     while True:
         try:
-            # send Multicast Message to all Multicast Receivers(Servers)
+            # send Multicast Message to all Multicast Receivers (Servers)
             # used from Server Leader or if a Server Replica recognizes another Server Replica crash
             if hosts.leader == hosts.myIP and hosts.network_changed or hosts.replica_crashed:
                 if hosts.leader_crashed:
