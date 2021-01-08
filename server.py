@@ -6,7 +6,6 @@ import sys
 import threading
 import queue
 
-from time import sleep
 from cluster import hosts, ports, receive_multicast, send_multicast, heartbeat
 
 # Creating TCP Socket for Server
@@ -91,7 +90,7 @@ def start_binding():
 # main Thread
 if __name__ == '__main__':
 
-    # trigger Multicast sender to check if a Multicast Receiver with given Multicast Address from cluster.hosts exists
+    # trigger Multicast Sender to check if a Multicast Receiver with given Multicast Address from cluster.hosts exists
     multicast_receiver_exist = send_multicast.sending_request_to_multicast()
 
     # append the own IP to the Server List and assign the own IP as the Server Leader
