@@ -32,7 +32,8 @@ def receive_message():
             print(data.decode(unicode))
 
             if not data:
-                print("\nChat server currently not available. Please wait 3 seconds for reconnection with new server leader.")
+                print("\nChat server currently not available."
+                      "Please wait 3 seconds for reconnection with new server leader.")
                 sock.close()
 
                 sleep(3)

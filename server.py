@@ -7,7 +7,7 @@ import queue
 
 from time import sleep
 
-from cluster import hosts, ports, receive_multicast, send_multicast, leader_election, heartbeat
+from cluster import hosts, ports, receive_multicast, send_multicast, heartbeat
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -43,14 +43,13 @@ def client_handler(client, address):
             data = client.recv(buffer_size)
             if not data:
                 sleep(0.5)
-                print(f'{address[0]} disconnected')
-                FIFO.put(f'\n{address[0]} disconnected\n')
+                print(f'{address} disconnected')
+                FIFO.put(f'\n{address} disconnected\n')
                 hosts.client_list.remove(client)
                 client.close()
-                printer()
                 break
-            FIFO.put(f'{address[0]} said: {data.decode(unicode)}')
-            print(f'Message from {address[0]} ==> {data.decode(unicode)}')
+            FIFO.put(f'{address} said: {data.decode(unicode)}')
+            print(f'Message from {address} ==> {data.decode(unicode)}')
         except Exception as e:
             print(e)
             break
@@ -66,13 +65,11 @@ def start_binding():
         try:
             client, address = sock.accept()
             if address[0] not in hosts.server_list or address[0] == hosts.myIP:
-                print(f'{address[0]} connected')
-                FIFO.put(f'\n{address[0]} connected\n')
+                print(f'{address} connected')
+                FIFO.put(f'\n{address} connected\n')
                 print(client)
                 hosts.client_list.append(client)
-
                 new_thread(client_handler, (client, address))
-                printer()
         except Exception as e:
             print(e)
             break

@@ -11,6 +11,7 @@ def start_heartbeat():
     while True:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.settimeout(0.5)
         hosts.neighbour = leader_election.start_leader_election(hosts.server_list, hosts.myIP)
         host_address = (hosts.neighbour, ports.server)
         print(f'\n{hosts.server_list}\n',
