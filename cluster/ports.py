@@ -1,4 +1,4 @@
-# these are all Ports for Chat Application
+# these are all ports used in the Chat Application
 
 multicast = 10000
 server = 10001
