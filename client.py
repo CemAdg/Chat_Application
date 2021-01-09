@@ -78,6 +78,7 @@ def connect():
 
         # connect to Server Leader
         sock.connect(leader_address)
+        sock.send('JOIN'.encode(hosts.unicode))
         print("You joined the Chat Room.\nYou can start chatting.")
 
     # if there is no Server available, exit the script

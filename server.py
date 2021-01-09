@@ -77,9 +77,10 @@ def start_binding():
     while True:
         try:
             client, address = sock.accept()
+            data = client.recv(hosts.buffer_size)
 
             # used just for Chat-Clients (filter out heartbeat)
-            if address[0] not in hosts.server_list or address[0] == hosts.myIP:
+            if data:
                 print(f'{address} connected')
                 FIFO.put(f'\n{address} connected\n')
                 hosts.client_list.append(client)
