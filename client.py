@@ -82,7 +82,7 @@ def connect():
         print("You joined the Chat Room.\nYou can start chatting.")
 
     # if there is no Server available, exit the script
-    elif not server_exist:
+    else:
         print("Please try to join later again.")
         os._exit(0)
 
