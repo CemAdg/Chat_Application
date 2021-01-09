@@ -35,7 +35,7 @@ def starting_multicast_receiver():
     while True:
         try:
             data, address = sock.recvfrom(hosts.buffer_size)
-            print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Received data from {address[0]}',
+            print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Received data from {address}\n',
                   file=sys.stderr)
 
             # used from Server Leader if a join message was sent from a Chat Client
@@ -44,7 +44,7 @@ def starting_multicast_receiver():
                 # answer Chat Client with Server Leader address
                 message = pickle.dumps([hosts.leader, ''])
                 sock.sendto(message, address)
-                print(f'\n[MULTICAST RECEIVER {hosts.myIP}] Client {address[0]} wants to join the Chat Room',
+                print(f'[MULTICAST RECEIVER {hosts.myIP}] Client {address} wants to join the Chat Room\n',
                       file=sys.stderr)
 
             # used from Server Leader if a Server Replica joined

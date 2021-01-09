@@ -20,8 +20,6 @@ def start_heartbeat():
         hosts.neighbour = leader_election.start_leader_election(hosts.server_list, hosts.myIP)
         host_address = (hosts.neighbour, ports.server)
 
-        print(f'\n{hosts.server_list}\n',
-              file=sys.stderr) if len(hosts.server_list) > 1 else None
 
         # only executed if a Neighbour is available to whom the Server can establish a connection
         if hosts.neighbour:

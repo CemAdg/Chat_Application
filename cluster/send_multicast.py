@@ -41,7 +41,7 @@ def sending_request_to_multicast():
         sock.recvfrom(hosts.buffer_size)
 
         if hosts.leader == hosts.myIP:
-            print(f'[MULTICAST SENDER {hosts.myIP}] All Servers have been updated',
+            print(f'[MULTICAST SENDER {hosts.myIP}] All Servers have been updated\n',
                   file=sys.stderr)
         return True
 

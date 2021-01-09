@@ -22,7 +22,6 @@ FIFO = queue.Queue()
 def printer():
     print(f'\n[SERVER] Server List: {hosts.server_list} ==> Leader: {hosts.leader}'
           f'\n[SERVER] Client List: {hosts.client_list}'
-          f'\n[SERVER] Clients: {len(hosts.client_list)}'
           f'\n[SERVER] Neighbour ==> {hosts.neighbour}\n')
 
 
@@ -124,6 +123,7 @@ if __name__ == '__main__':
             # used from Server Replica to set the variable to False
             if hosts.leader != hosts.myIP and hosts.network_changed:
                 hosts.network_changed = False
+                printer()
 
             # function to send the FIFO Queue messages
             send_clients()
