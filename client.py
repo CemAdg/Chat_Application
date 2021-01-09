@@ -8,9 +8,6 @@ import os
 from time import sleep
 from cluster import hosts, ports, send_multicast
 
-# creating TCP Socket for Client
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
 
 # standardized for creating and starting Threads
 def new_thread(target, args):
