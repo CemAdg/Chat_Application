@@ -1,7 +1,4 @@
-# DBE14_ChatApplication Group
+# DBE14 Group 16 - Chat Application
 
-## WE DID IT
-
-### Started from the bottom, NOW we HERE
-
-# DONE
+## Demo Video Link
+https://hasanoglu.ddnss.de/s/DBE14_GRP16_Demo_Video_Chat_Application
